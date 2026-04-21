@@ -1,0 +1,139 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+dotenv: [".env"]
+
+vars:
+  MAIN_PATH: ./src/main.go
+  BINARY_NAME: main.exe
+  # Goose Variables
+  GOOSE_DIR: ./db/schema
+  GOOSE_DRIVER: sqlite3
+
+tasks:
+  default:
+    desc: Show all available commands
+    cmds:
+      - task --list
+    silent: true
+
+  # Development
+  dev:
+    desc: Start development server with live reload (Air)
+    preconditions:
+      - sh: command -v air
+        msg: "Air not found. Install with: go install github.com/air-verse/air@latest"
+    cmd: air
+
+  start:
+    env:
+      GO_ENV: prod
+    desc: Run the production binary (requires build first)
+    cmd: ./{{.BINARY_NAME}}
+
+  build:
+    desc: Build optimized binary for current OS
+    cmds:
+      - task: mod:tidy
+      - task: mod:clean
+      - task: web:build
+      - go build -ldflags="-w -s" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}
+      - ls -lh {{.BINARY_NAME}}
+
+  # Code Quality
+  code:test:
+    desc: Run all tests
+    vars:
+      DB_PATH: ./tmp/test.db
+    env:
+      GO_ENV: test
+      ENV_PATH: ../.env
+      DB_PATH: ".{{.DB_PATH}}"
+    cmds:
+      - mkdir -p tmp
+      - task: migrate:up
+        vars:
+          DB_PATH: "{{.DB_PATH}}"
+      - go test ./tests/... -v
+      - task: migrate:reset
+        vars:
+          DB_PATH: "{{.DB_PATH}}"
+      - rm -rf tmp
+
+  code:format:
+    desc: Format all Go source code
+    cmd: go fmt ./...
+
+  # Dependencies
+  mod:deps:
+    desc: Download and cache all dependencies
+    cmd: go mod download
+
+  mod:tidy:
+    desc: Remove unused dependencies and clean go.mod
+    cmd: go mod tidy
+
+  mod:clean:
+    desc: Remove build artifacts and temporary files
+    cmd: rm -rf bin/ tmp/ coverage.out coverage.html
+
+  # Migrations (goose)
+  migrate:up:
+    desc: Run all pending migrations
+    preconditions:
+      - sh: command -v goose
+        msg: "goose not found. Install with: go install github.com/pressly/goose/v3/cmd/goose@latest"
+    cmd: GOOSE_DRIVER={{.GOOSE_DRIVER}} GOOSE_DBSTRING="{{.DB_PATH}}" goose -dir {{.GOOSE_DIR}} up
+
+  migrate:down:
+    desc: Rollback last migration
+    cmd: GOOSE_DRIVER={{.GOOSE_DRIVER}} GOOSE_DBSTRING="{{.DB_PATH}}" goose -dir {{.GOOSE_DIR}} down
+
+  migrate:status:
+    desc: Show migration status
+    cmd: GOOSE_DRIVER={{.GOOSE_DRIVER}} GOOSE_DBSTRING="{{.DB_PATH}}" goose -dir {{.GOOSE_DIR}} status
+
+  migrate:reset:
+    desc: Rollback all migrations
+    cmd: GOOSE_DRIVER={{.GOOSE_DRIVER}} GOOSE_DBSTRING="{{.DB_PATH}}" goose -dir {{.GOOSE_DIR}} reset
+
+  # Code Generation (sqlc)
+  sqlc:
+    desc: Generate type-safe Go code from SQL queries
+    preconditions:
+      - sh: command -v sqlc
+        msg: "sqlc not found. Install with: go install github.com/sqlc-dev/sqlc/src/sqlc@latest"
+    dir: sqldb
+    cmd: sqlc generate
+
+  # Web Dashboard (React Router + Bun)
+  web:dev:
+    desc: Start web dashboard dev server
+    dir: web
+    cmd: bun run dev
+
+  web:build:
+    desc: Build web dashboard for production
+    dir: web
+    cmd: bun run build
+
+  web:deps:
+    desc: Install web dashboard dependencies
+    dir: web
+    cmd: bun install
+
+  web:lint:
+    desc: Lint web dashboard code with Biome
+    dir: web
+    cmd: bun run lint
+
+  web:format:
+    desc: Format web dashboard code with Biome
+    dir: web
+    cmd: bun run format
+
+  web:check:
+    desc: Run TypeScript type checking
+    dir: web
+    cmd: bun run check
