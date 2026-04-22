@@ -23,7 +23,7 @@ func Init() {
 			TimeFormat: TIMESTAMP,
 		}
 		writers = append(writers, console)
-		if !conf.Env.IS_DEV && !conf.Env.IS_TEST {
+		if conf.Env.IS_PROD {
 			// Production: Stdout + Rotating file
 			fileWriter := &lumberjack.Logger{
 				Filename:   LOG_PATh,

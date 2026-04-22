@@ -12,21 +12,21 @@ import (
 var (
 	Pool *sql.DB
 	once sync.Once
-	err  error
 )
 
 func Connect() {
 	once.Do(func() {
 		// Open connection (creates DB file if not exists)
-		Pool, err = sql.Open("sqlite3", conf.Env.DB_PATH)
+		con, err := sql.Open("sqlite3", conf.Env.DB_PATH)
 		if err != nil {
 			log.Fatal().Err(err).Msg("❌ Failed to open DB")
 		}
 		// Verify connection
-		if err = Pool.Ping(); err != nil {
+		if err = con.Ping(); err != nil {
 			log.Fatal().Err(err).Msg("❌ Failed to connect to DB")
 		}
 		// Optional: SQLite works best with 1 writer
+		Pool = con
 		Pool.SetMaxOpenConns(1)
 	})
 }

@@ -19,9 +19,9 @@ type Config struct {
 	SECRET      string `validate:"required,min=32"`
 	GO_ENV      string `validate:"required,oneof=dev prod test"`
 	CORS_ORIGIN string `validate:"required"`
-	VERSION     string `validate:"required"`
 	IS_DEV      bool   `validate:"boolean"`
 	IS_TEST     bool   `validate:"boolean"`
+	IS_PROD     bool   `validate:"boolean"`
 	// Rate limiter
 	RATE_LIMIT_WINDOWS time.Duration `validate:"required,gt=0"`
 	RATE_LIMIT_MAX_REQ int           `validate:"required,gt=0"`
@@ -39,8 +39,9 @@ type Config struct {
 }
 
 var (
-	Env  *Config
-	once sync.Once
+	Env     *Config
+	once    sync.Once
+	VERSION = "dirty" // overridden with -ldflags
 )
 
 func Init() {
@@ -54,7 +55,6 @@ func Init() {
 			NAME:               "DokPanel",
 			PORT:               getEnvInt("PORT", 8000),
 			HOST:               getEnv("HOST", "0.0.0.0"),
-			VERSION:            "v1.0.0",
 			GO_ENV:             GO_ENV,
 			CORS_ORIGIN:        getEnv("CORS_ALLOW_ORIGIN"),
 			SECRET:             getEnv("SECRET"),
@@ -62,6 +62,7 @@ func Init() {
 			START_TIME:         time.Now(),
 			IS_DEV:             GO_ENV == consts.DEV,
 			IS_TEST:            GO_ENV == consts.TEST,
+			IS_PROD:            GO_ENV == consts.PROD,
 			BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
 			JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),
 			JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24d"),

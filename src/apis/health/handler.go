@@ -20,7 +20,7 @@ type Handler struct {
 func NewHandler() *Handler {
 	return &Handler{
 		env:     &conf.Env.GO_ENV,
-		version: &conf.Env.VERSION,
+		version: &conf.VERSION,
 		startAt: &conf.Env.START_TIME,
 	}
 }

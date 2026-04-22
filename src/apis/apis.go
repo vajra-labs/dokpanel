@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"dokpanel/src/apis/auth"
 	"dokpanel/src/apis/health"
 	"dokpanel/src/middle"
 
@@ -8,8 +9,9 @@ import (
 )
 
 func Router(app fiber.Router) {
-	// Health Endpoint
+	// Api's Endpoint
 	app.Route("/", health.Router, "health")
+	app.Route("/auth", auth.Router, "auth")
 	// 404 for unknown API routes
 	app.Use(middle.NotFoundHandler)
 }

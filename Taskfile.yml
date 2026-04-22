@@ -5,6 +5,9 @@ version: "3"
 dotenv: [".env"]
 
 vars:
+  # Build Variables
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
   MAIN_PATH: ./src/main.go
   BINARY_NAME: main.exe
   # Goose Variables
@@ -38,8 +41,18 @@ tasks:
       - task: mod:tidy
       - task: mod:clean
       - task: web:build
-      - go build -ldflags="-w -s" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}
+      - go build -ldflags="-w -s -X dokpanel/src/conf.VERSION={{.VERSION}}" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}
       - ls -lh {{.BINARY_NAME}}
+
+  info:
+    desc: Show project information
+    silent: true
+    cmds:
+      - echo "Version    -> {{.VERSION}}"
+      - echo "Modules    -> $(go list -m)"
+      - echo "Go Version -> $(go version)"
+      - echo "OS/Arch    -> $(go env GOOS)/$(go env GOARCH)"
+      - echo "Packages   -> $(go list ./... | wc -l | xargs)"
 
   # Code Quality
   code:test:
