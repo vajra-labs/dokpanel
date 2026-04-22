@@ -60,4 +60,3 @@ func TestHealthEndpoints(t *testing.T) {
 		}
 	})
 }
-
