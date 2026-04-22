@@ -4,6 +4,9 @@ version: "3"
 
 dotenv: [".env"]
 
+env:
+  GO111MODULE: auto
+
 vars:
   # Build Variables
   VERSION:
@@ -56,7 +59,10 @@ tasks:
 
   # Code Quality
   code:test:
-    desc: Run all tests
+    desc: Run all tests with gotestsum external formatter
+    preconditions:
+      - sh: command -v gotestsum
+        msg: "gotestsum not found. Install with: go install gotest.tools/gotestsum@latest"
     vars:
       DB_PATH: ./tmp/test.db
     env:
@@ -68,10 +74,7 @@ tasks:
       - task: migrate:up
         vars:
           DB_PATH: "{{.DB_PATH}}"
-      - go test ./tests/... -v
-      - task: migrate:reset
-        vars:
-          DB_PATH: "{{.DB_PATH}}"
+      - gotestsum --format testname ./tests/...
       - rm -rf tmp
 
   code:format:
