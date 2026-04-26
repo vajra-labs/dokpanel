@@ -31,17 +31,17 @@ type Config struct {
 	JWT_ACCESS_EXP  time.Duration `validate:"required,gt=0"`
 	JWT_REFRESH_EXP time.Duration `validate:"required,gt=0"`
 	// Body parser limit
-	BODY_LIMIT int       `validate:"required,gt=0"`
-	START_TIME time.Time `validate:"required"`
+	BODY_LIMIT int `validate:"required,gt=0"`
 	// Docker Config
 	DOCKER_HOST        string `validate:"required"`
 	DOCKER_API_VERSION string `validate:"required"`
+	START_TIME         time.Time
 }
 
 var (
 	Env     *Config
 	once    sync.Once
-	VERSION = "dirty" // overridden with -ldflags
+	VERSION = "dirty" // Overridden with -ldflags
 )
 
 func Init() {
@@ -59,10 +59,10 @@ func Init() {
 			CORS_ORIGIN:        getEnv("CORS_ALLOW_ORIGIN"),
 			SECRET:             getEnv("SECRET"),
 			DB_PATH:            getEnv("DB_PATH"),
-			START_TIME:         time.Now(),
 			IS_DEV:             GO_ENV == consts.DEV,
 			IS_TEST:            GO_ENV == consts.TEST,
 			IS_PROD:            GO_ENV == consts.PROD,
+			START_TIME:         time.Now(),
 			BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
 			JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),
 			JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24d"),
