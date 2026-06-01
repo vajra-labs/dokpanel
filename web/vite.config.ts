@@ -7,16 +7,16 @@ import {defineConfig} from 'vite'
 
 // https://vite.dev/config/
 const config = defineConfig({
-	resolve: {tsconfigPaths: true},
-	plugins: [
-		devtools(),
-		tailwindcss(),
-		tanstackRouter({target: 'react', autoCodeSplitting: true}),
-		viteReact(),
-		babel({
-			presets: [reactCompilerPreset()],
-		}),
-	],
+  resolve: {tsconfigPaths: true},
+  plugins: [
+    devtools(),
+    tailwindcss(),
+    tanstackRouter({target: 'react', autoCodeSplitting: true}),
+    viteReact(),
+    babel({
+      presets: [reactCompilerPreset()],
+    }),
+  ],
 })
 
 export default config

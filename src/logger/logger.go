@@ -26,7 +26,7 @@ func init() {
 		if conf.Env.IS_PROD {
 			// Production: Stdout + Rotating file
 			fileWriter := &lumberjack.Logger{
-				Filename:   LOG_PATh,
+				Filename:   LOG_PATH,
 				MaxSize:    100,
 				MaxBackups: 3,
 				MaxAge:     28,

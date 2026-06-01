@@ -7,10 +7,10 @@ tmp_dir = "tmp"
 
 [build]
 args_bin = []
-bin = "./tmp/main"
-cmd = "go build -ldflags=\"-X dokpanel/src/conf.VERSION=$(cat .VERSION 2>/dev/null)\" -o ./tmp/main ./cmd/main.go"
+bin = "./tmp/main.exe"
+cmd = "go build -o ./tmp/main.exe ./cmd/main.go"
 delay = 1000
-entrypoint = ["./tmp/main"]
+entrypoint = ["./tmp/main.exe"]
 exclude_dir = ["assets", "tmp", "vendor", "testdata", "bin"]
 exclude_file = [".env.example", ".env.local", ".env.test"]
 exclude_regex = ["_test.go"]

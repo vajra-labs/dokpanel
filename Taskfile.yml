@@ -128,16 +128,16 @@ tasks:
     cmd: bun install
 
   web:lint:
-    desc: Lint web dashboard code with Biome
+    desc: Lint web dashboard code with ESLint
     dir: web
     cmd: bun run lint
 
   web:format:
-    desc: Format web dashboard code with Biome
+    desc: Format web dashboard code with Prettier
     dir: web
     cmd: bun run format
 
   web:check:
-    desc: Run TypeScript type checking
+    desc: Run lint and format checks
     dir: web
     cmd: bun run check

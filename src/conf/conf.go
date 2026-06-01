@@ -65,7 +65,7 @@ func init() {
 			START_TIME:         time.Now(),
 			BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
 			JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),
-			JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24d"),
+			JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24h"),
 			RATE_LIMIT_MAX_REQ: getEnvInt("RATE_LIMIT_MAX_REQ", 100),
 			RATE_LIMIT_WINDOWS: getEnvTime("RATE_LIMIT_WINDOWS", "15m"),
 			DOCKER_HOST:        getEnv("DOCKER_HOST"),

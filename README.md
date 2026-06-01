@@ -26,11 +26,10 @@ dokpanel is a free, self-hostable deployment platform that simplifies applicatio
 
 ### Prerequisites
 
-- Go 1.23+
+- Go 1.26+
+- [Docker](https://www.docker.com/products/docker-desktop)
 - [Bun](https://bun.com/) (for building the frontend)
-- [Biome](https://biomejs.dev/guides/manual-installation/) (for linting + formatting)
 - [Taskfile](https://taskfile.dev/docs/installation) (cross-platform build tool)
-- Docker (optional)
 
 ### Installation
 
@@ -72,9 +71,9 @@ task mod:clean    # Remove build artifacts
 task web:dev      # Start React dev server (port 3000)
 task web:build    # Build React SPA for production
 task web:deps     # Install frontend dependencies
-task web:lint     # Lint with Biome
-task web:format   # Format with Biome
-task web:check    # Biome check (lint + format)
+task web:lint     # Lint with ESLint
+task web:format   # Format with Prettier
+task web:check    # Check (lint + format)
 
 # Database migrations (goose)
 task migrate:up      # Run pending migrations
@@ -91,13 +90,13 @@ task sqlc         # Generate type-safe Go from SQL
 Configure via `.env` file:
 
 ```env
-GO_ENV="development"         # development | production
+GO_ENV="development" # dev, prod, test
 HOST="0.0.0.0"
 PORT=8000
 SECRET="your-secret-key-min-32-chars"
 CORS_ALLOW_ORIGIN="http://localhost:3000"
 BODY_LIMIT="2MB"
-DB_PATH="./dokpanel.db"
+DB_PATH="sqldb/db.sqlite3"
 
 # JWT
 JWT_ACCESS_EXP="5m"
@@ -114,36 +113,37 @@ DOCKER_API_VERSION="1.41"
 
 ## 🏗️ Architecture
 
-**Handler → Service → Repository → Database**
+**Handler → Repository → Database**
 
 ```
-src/
-├── apis/          # Route handlers (health, ...)
-├── conf/          # Config loading & validation
-├── consts/        # Shared constants & enums
-├── db/            # Database connection
-├── lib/           # Shared utilities (HttpError, ...)
-├── logger/        # Zerolog setup
-├── middle/        # Middleware (error, rate limit, 404)
-├── server/        # Fiber app setup
-└── main.go
+cmd/
+└── main.go        # Entry point
 
-webui/             # React dashboard (TanStack Router + Tailwind)
+src/
+├── apis/          # Route handlers (auth, health, ...)
+├── conf/          # Config loading & validation
+├── db/            # Database client & repositories
+├── lib/           # Shared utilities (core errors, ...)
+├── logger/        # Zerolog setup
+├── middle/        # Middleware (error, rate limit)
+├── server/        # Fiber app setup
+└── types/         # Shared enums & types
+
+web/               # React dashboard (TanStack Router + Tailwind v4)
 ├── src/
 │   ├── routes/    # File-based routes
 │   └── main.tsx
 └── embed.go       # Embeds dist/ into Go binary
 
 tests/             # Integration tests
-db/                # SQL migrations (goose) & sqlc config
+sqldb/             # SQL migrations & sqlc config
 ```
 
-### `webui/` — Frontend Dashboard
+### `web/` — Frontend Dashboard
 
 - **TanStack Router** — file-based routing, SPA mode
 - **React Compiler** — automatic memoization
 - **Tailwind CSS v4** — utility-first styling
-- **Biome** — linting + formatting
 - **Embedded in Go binary** via `//go:embed` — single binary deploy
 - **Routing**: `/api/*` handled by Go, everything else served by React SPA
 
