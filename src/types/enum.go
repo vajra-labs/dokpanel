@@ -1,4 +1,4 @@
-package consts
+package types
 
 // Declare Types
 type TOKEN string

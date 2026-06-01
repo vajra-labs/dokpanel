@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 
 	"dokpanel/src/conf"
-	"dokpanel/src/lib"
+	"dokpanel/src/lib/core"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog/log"
@@ -14,7 +14,7 @@ import (
 // Global Error Handler
 func ErrorHandler(ctx fiber.Ctx, err error) error {
 	// Handle known HttpError
-	if httpErr, ok := lib.IsHttpError(err); ok {
+	if httpErr, ok := core.IsHttpError(err); ok {
 		return httpErr.ToJSON(ctx)
 	}
 	// Handle Fiber built-in errors
@@ -50,10 +50,10 @@ func NotFoundHandler(ctx fiber.Ctx) error {
 	path := ctx.Path()
 	method := ctx.Method()
 	// BadRequest Error
-	return lib.BadRequestError(
+	return core.BadRequestError(
 		"Wrong Path",
 		"NOT_FOUND",
-		lib.WithMeta("path", path),
-		lib.WithMeta("method", method),
+		core.WithMeta("path", path),
+		core.WithMeta("method", method),
 	)
 }

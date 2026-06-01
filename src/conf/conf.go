@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"dokpanel/src/consts"
+	"dokpanel/src/types"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -44,13 +44,13 @@ var (
 	VERSION = "dirty" // Overridden with -ldflags
 )
 
-func Init() {
+func init() {
 	once.Do(func() {
 		ENV_PATH := getEnv("ENV_PATH", ".env")
 		if err := godotenv.Load(ENV_PATH); err != nil {
 			log.Printf("Error: %s file not found: %v\n", ENV_PATH, err)
 		}
-		GO_ENV := getEnv("GO_ENV", consts.DEV)
+		GO_ENV := getEnv("GO_ENV", types.DEV)
 		Env = &Config{
 			NAME:               "DokPanel",
 			PORT:               getEnvInt("PORT", 8000),
@@ -59,9 +59,9 @@ func Init() {
 			CORS_ORIGIN:        getEnv("CORS_ALLOW_ORIGIN"),
 			SECRET:             getEnv("SECRET"),
 			DB_PATH:            getEnv("DB_PATH"),
-			IS_DEV:             GO_ENV == consts.DEV,
-			IS_TEST:            GO_ENV == consts.TEST,
-			IS_PROD:            GO_ENV == consts.PROD,
+			IS_DEV:             GO_ENV == types.DEV,
+			IS_TEST:            GO_ENV == types.TEST,
+			IS_PROD:            GO_ENV == types.PROD,
 			START_TIME:         time.Now(),
 			BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
 			JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),

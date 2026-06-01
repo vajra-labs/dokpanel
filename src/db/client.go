@@ -14,7 +14,7 @@ var (
 	once sync.Once
 )
 
-func Connect() {
+func init() {
 	once.Do(func() {
 		// Open connection (creates DB file if not exists)
 		con, err := sql.Open("sqlite3", conf.Env.DB_PATH)
@@ -29,11 +29,4 @@ func Connect() {
 		Pool = con
 		Pool.SetMaxOpenConns(1)
 	})
-}
-
-func Disconnect() {
-	if Pool != nil {
-		Pool.Close()
-		log.Info().Msg("✅ DB connection closed!")
-	}
 }

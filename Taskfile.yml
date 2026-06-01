@@ -8,13 +8,11 @@ env:
   GO111MODULE: auto
 
 vars:
-  VERSION:
-    sh: cat .VERSION 2>/dev/null
-  MAIN_PATH: ./src/main.go
-  BINARY_NAME: main.exe
-  LICENSE: "MIT"
+  VERSION: 0.1.0
+  MAIN_PATH: ./cmd/main.go
+  BINARY_NAME: ./tmp/main.exe
   # Goose Variables
-  GOOSE_DIR: ./db/schema
+  GOOSE_DIR: ./sqldb/schema
   GOOSE_DRIVER: sqlite3
 
 tasks:

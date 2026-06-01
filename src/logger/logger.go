@@ -14,7 +14,7 @@ import (
 
 var once sync.Once
 
-func Init() {
+func init() {
 	once.Do(func() {
 		var writers []io.Writer
 		// Dev: Colored console only

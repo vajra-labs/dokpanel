@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"dokpanel/src/conf"
-	"dokpanel/src/db"
-	"dokpanel/src/logger"
-	"dokpanel/src/server"
 	"os"
 	"testing"
+
+	"dokpanel/src/db"
+	_ "dokpanel/src/logger"
+	"dokpanel/src/server"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -14,15 +14,12 @@ import (
 var App *fiber.App
 
 func TestMain(m *testing.M) {
-	conf.Init()
-	logger.Init()
-	// Connect to database
-	db.Connect()
-	App = server.NewApp()
+	App = server.New()
+
 	// Run all tests cases
 	code := m.Run()
-	// Disconnect from database
-	db.Disconnect()
-	// Exit with the test result code
+
+	// Your cleanup tasks go here
+	db.Pool.Close()
 	os.Exit(code)
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func NewApp() *fiber.App {
+func New() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      conf.Env.NAME,
 		BodyLimit:    conf.Env.BODY_LIMIT,
