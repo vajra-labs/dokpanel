@@ -4,6 +4,9 @@
   <p>Self-hostable Platform as a Service (PaaS) for modern application deployment</p>
 </div>
 
+> [!WARNING]
+> This project is currently in **active development** and is not ready for production use. APIs and configurations are subject to change.
+
 <br />
 
 dokpanel is a free, self-hostable deployment platform that simplifies application and database management with blazing-fast performance powered by Go.
@@ -42,11 +45,24 @@ task web:deps
 
 ### Development
 
-```bash
-task dev
-```
+1. **One-time Setup**: Run the setup command to initialize the development environment (Docker Swarm, Traefik, etc.):
 
-Server starts at `http://localhost:8000`.
+   ```bash
+   task setup
+   ```
+
+2. **Start Dev Server**: Start the development server with live reload (Air):
+
+   ```bash
+   task dev
+   ```
+
+   Server starts at `http://localhost:8000`.
+
+3. **Teardown**: Revert the dev setup (remove Traefik, Swarm, etc.):
+   ```bash
+   task teardown
+   ```
 
 ### Production Build
 
@@ -59,6 +75,8 @@ task start   # runs the binary
 
 ```bash
 task              # Show all available commands
+task setup        # One-time dev setup (Swarm, Traefik, etc.)
+task teardown     # Revert dev setup (remove Traefik, etc.)
 task dev          # Start dev server with live reload (Air)
 task build        # Build production binary (includes web:build)
 task start        # Run production binary
