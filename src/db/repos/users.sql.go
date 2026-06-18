@@ -13,7 +13,7 @@ const getUserByID = `-- name: GetUserByID :one
 SELECT id, email, last_name, first_name, avatar, role, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, group_id, created_at, updated_at FROM users WHERE id = ?
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(

@@ -9,7 +9,7 @@ env:
 
 vars:
   VERSION: 0.1.0
-  MAIN_PATH: ./cmd/main.go
+  MAIN_PATH: ./cmd/server/main.go
   BINARY_NAME: ./tmp/main.exe
   # Goose Variables
   GOOSE_DIR: ./sqldb/schema
@@ -23,6 +23,14 @@ tasks:
     silent: true
 
   # Development
+  setup:
+    desc: One-time dev setup (Swarm, Traefik, ...etc)
+    cmd: go run ./cmd/setup/main.go
+
+  teardown:
+    desc: Revert dev setup (remove Traefik, ...etc)
+    cmd: go run ./cmd/setup/main.go --teardown
+
   dev:
     desc: Start development server with live reload (Air)
     preconditions:
@@ -34,7 +42,7 @@ tasks:
     env:
       GO_ENV: prod
     desc: Run the production binary (requires build first)
-    cmd: ./{{.BINARY_NAME}}
+    cmd: "{{.BINARY_NAME}}"
 
   build:
     desc: Build optimized binary for current OS

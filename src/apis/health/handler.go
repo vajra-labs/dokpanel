@@ -19,20 +19,23 @@ type Handler struct {
 // Health Method
 func NewHandler() *Handler {
 	return &Handler{
-		env:     &conf.Env.GO_ENV,
 		version: &conf.VERSION,
+		env:     &conf.Env.GO_ENV,
 		startAt: &conf.Env.START_TIME,
 	}
 }
 
+// Server Ping Handler
 func (h *Handler) Ping(ctx fiber.Ctx) error {
 	return ctx.SendString("Pong!")
 }
 
+// Server Pong Handler
 func (h *Handler) Pong(ctx fiber.Ctx) error {
 	return ctx.SendString("Ping!")
 }
 
+// Server Health Handler
 func (h *Handler) Health(ctx fiber.Ctx) error {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)

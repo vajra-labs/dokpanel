@@ -21,6 +21,7 @@ dokpanel is a free, self-hostable deployment platform that simplifies applicatio
 - **Minimal Footprint**: ~13MB binary, <50MB idle memory
 - **Auto Recovery**: Built-in panic recovery for production stability
 - **Health Monitoring**: Real-time health checks with memory stats
+- goqite->(JobQueue), gopsutil->(Monitoring), and robfig/cron->(Backups/Cleanup)
 
 ## 🚀 Getting Started
 
@@ -126,8 +127,8 @@ src/
 ├── lib/           # Shared utilities (core errors, ...)
 ├── logger/        # Zerolog setup
 ├── middle/        # Middleware (error, rate limit)
-├── server/        # Fiber app setup
-└── types/         # Shared enums & types
+├── types/         # Shared enums & types
+└── fiber.go       # Fiber app setup
 
 web/               # React dashboard (TanStack Router + Tailwind v4)
 ├── src/

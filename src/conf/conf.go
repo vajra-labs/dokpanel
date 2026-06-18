@@ -3,7 +3,6 @@ package conf
 import (
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"dokpanel/src/types"
@@ -40,40 +39,37 @@ type Config struct {
 
 var (
 	Env     *Config
-	once    sync.Once
 	VERSION = "dirty" // Overridden with -ldflags
 )
 
 func init() {
-	once.Do(func() {
-		ENV_PATH := getEnv("ENV_PATH", ".env")
-		if err := godotenv.Load(ENV_PATH); err != nil {
-			log.Printf("Error: %s file not found: %v\n", ENV_PATH, err)
-		}
-		GO_ENV := getEnv("GO_ENV", types.DEV)
-		Env = &Config{
-			NAME:               "DokPanel",
-			PORT:               getEnvInt("PORT", 8000),
-			HOST:               getEnv("HOST", "0.0.0.0"),
-			GO_ENV:             GO_ENV,
-			CORS_ORIGIN:        getEnv("CORS_ALLOW_ORIGIN"),
-			SECRET:             getEnv("SECRET"),
-			DB_PATH:            getEnv("DB_PATH"),
-			IS_DEV:             GO_ENV == types.DEV,
-			IS_TEST:            GO_ENV == types.TEST,
-			IS_PROD:            GO_ENV == types.PROD,
-			START_TIME:         time.Now(),
-			BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
-			JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),
-			JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24h"),
-			RATE_LIMIT_MAX_REQ: getEnvInt("RATE_LIMIT_MAX_REQ", 100),
-			RATE_LIMIT_WINDOWS: getEnvTime("RATE_LIMIT_WINDOWS", "15m"),
-			DOCKER_HOST:        getEnv("DOCKER_HOST"),
-			DOCKER_API_VERSION: getEnv("DOCKER_API_VERSION"),
-		}
-		if err := validator.New().Struct(Env); err != nil {
-			str := fmt.Sprintf("❌ Config validation failed: %v", err)
-			panic(str)
-		}
-	})
+	ENV_PATH := getEnv("ENV_PATH", ".env")
+	if err := godotenv.Load(ENV_PATH); err != nil {
+		log.Printf("Error: %s file not found: %v\n", ENV_PATH, err)
+	}
+	GO_ENV := getEnv("GO_ENV", types.DEV)
+	Env = &Config{
+		NAME:               "DokPanel",
+		PORT:               getEnvInt("PORT", 8000),
+		HOST:               getEnv("HOST", "0.0.0.0"),
+		GO_ENV:             GO_ENV,
+		CORS_ORIGIN:        getEnv("CORS_ALLOW_ORIGIN"),
+		SECRET:             getEnv("SECRET"),
+		DB_PATH:            getEnv("DB_PATH"),
+		IS_DEV:             GO_ENV == types.DEV,
+		IS_TEST:            GO_ENV == types.TEST,
+		IS_PROD:            GO_ENV == types.PROD,
+		START_TIME:         time.Now(),
+		BODY_LIMIT:         int(getEnvByte("BODY_LIMIT")),
+		JWT_ACCESS_EXP:     getEnvTime("JWT_ACCESS_EXP", "5m"),
+		JWT_REFRESH_EXP:    getEnvTime("JWT_REFRESH_EXP", "24h"),
+		RATE_LIMIT_MAX_REQ: getEnvInt("RATE_LIMIT_MAX_REQ", 100),
+		RATE_LIMIT_WINDOWS: getEnvTime("RATE_LIMIT_WINDOWS", "15m"),
+		DOCKER_HOST:        getEnv("DOCKER_HOST"),
+		DOCKER_API_VERSION: getEnv("DOCKER_API_VERSION"),
+	}
+	if err := validator.New().Struct(Env); err != nil {
+		str := fmt.Sprintf("❌ Config validation failed: %v", err)
+		panic(str)
+	}
 }

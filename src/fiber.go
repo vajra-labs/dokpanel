@@ -1,4 +1,4 @@
-package server
+package src
 
 import (
 	"dokpanel/src/apis"
@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func New() *fiber.App {
+func App() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      conf.Env.NAME,
 		BodyLimit:    conf.Env.BODY_LIMIT,

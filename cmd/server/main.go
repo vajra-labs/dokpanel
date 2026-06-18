@@ -10,16 +10,19 @@ import (
 	"syscall"
 	"time"
 
+	"dokpanel/src"
 	"dokpanel/src/conf"
 	"dokpanel/src/db"
+	"dokpanel/src/docker"
 	_ "dokpanel/src/logger"
-	"dokpanel/src/server"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
-	app := server.New()
+	docker.Init()
+
+	app := src.App()
 	uri := fmt.Sprintf("%s:%d", conf.Env.HOST, conf.Env.PORT)
 
 	// Listen from a different goroutine
@@ -41,6 +44,7 @@ func main() {
 
 	// Your cleanup tasks go here
 	fmt.Println("Running cleanup tasks...")
-	db.Pool.Close()
+	db.Close()
+	docker.Close()
 	fmt.Println("Cleanup completed. Bye 👋")
 }

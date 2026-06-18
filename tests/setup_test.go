@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
+	"dokpanel/src"
 	"dokpanel/src/db"
 	_ "dokpanel/src/logger"
-	"dokpanel/src/server"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -14,7 +14,7 @@ import (
 var App *fiber.App
 
 func TestMain(m *testing.M) {
-	App = server.New()
+	App = src.App()
 
 	// Run all tests cases
 	code := m.Run()

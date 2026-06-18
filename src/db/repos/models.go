@@ -5,33 +5,41 @@
 package repos
 
 type ActivityLog struct {
-	ID        string `json:"id"`
-	UserID    string `json:"user_id"`
+	ID        int64  `json:"id"`
+	UserID    int64  `json:"user_id"`
 	Activity  string `json:"activity"`
 	Source    string `json:"source"`
 	ClientIp  string `json:"client_ip"`
 	CreatedAt int64  `json:"created_at"`
 }
 
+type ContainerMetric struct {
+	ID            int64  `json:"id"`
+	Timestamp     int64  `json:"timestamp"`
+	ContainerID   string `json:"container_id"`
+	ContainerName string `json:"container_name"`
+	MetricsJson   string `json:"metrics_json"`
+}
+
 type Group struct {
-	ID        string `json:"id"`
+	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`
 }
 
 type GroupPolicy struct {
-	ID        string `json:"id"`
-	GroupID   string `json:"group_id"`
-	PolicyID  string `json:"policy_id"`
-	CreatedAt int64  `json:"created_at"`
+	ID        int64 `json:"id"`
+	GroupID   int64 `json:"group_id"`
+	PolicyID  int64 `json:"policy_id"`
+	CreatedAt int64 `json:"created_at"`
 }
 
 type JwtToken struct {
-	ID          string `json:"id"`
+	ID          int64  `json:"id"`
 	Jti         string `json:"jti"`
 	Role        string `json:"role"`
-	UserID      string `json:"user_id"`
+	UserID      int64  `json:"user_id"`
 	IsBlacklist *int64 `json:"is_blacklist"`
 	BlacklistAt *int64 `json:"blacklist_at"`
 	ExpiredAt   *int64 `json:"expired_at"`
@@ -40,20 +48,41 @@ type JwtToken struct {
 }
 
 type Policy struct {
-	ID        string `json:"id"`
+	ID        int64  `json:"id"`
 	Action    string `json:"action"`
 	CreatedAt int64  `json:"created_at"`
 }
 
+type ServerMetric struct {
+	Timestamp        int64   `json:"timestamp"`
+	Cpu              float64 `json:"cpu"`
+	CpuModel         string  `json:"cpu_model"`
+	CpuCores         int64   `json:"cpu_cores"`
+	CpuPhysicalCores int64   `json:"cpu_physical_cores"`
+	CpuSpeed         float64 `json:"cpu_speed"`
+	Os               string  `json:"os"`
+	Distro           string  `json:"distro"`
+	Kernel           string  `json:"kernel"`
+	Arch             string  `json:"arch"`
+	MemUsed          float64 `json:"mem_used"`
+	MemUsedGb        float64 `json:"mem_used_gb"`
+	MemTotal         float64 `json:"mem_total"`
+	Uptime           int64   `json:"uptime"`
+	DiskUsed         float64 `json:"disk_used"`
+	TotalDisk        float64 `json:"total_disk"`
+	NetworkIn        float64 `json:"network_in"`
+	NetworkOut       float64 `json:"network_out"`
+}
+
 type TwoFactor struct {
-	ID          string `json:"id"`
+	ID          int64  `json:"id"`
 	Secret      string `json:"secret"`
 	BackupCodes string `json:"backup_codes"`
-	UserID      string `json:"user_id"`
+	UserID      int64  `json:"user_id"`
 }
 
 type User struct {
-	ID              string  `json:"id"`
+	ID              int64   `json:"id"`
 	Email           *string `json:"email"`
 	LastName        *string `json:"last_name"`
 	FirstName       *string `json:"first_name"`
@@ -65,8 +94,8 @@ type User struct {
 	EmailVerifyAt   *int64  `json:"email_verify_at"`
 	TwoFactorEnable *int64  `json:"two_factor_enable"`
 	IsRegistered    int64   `json:"is_registered"`
-	AddedBy         *string `json:"added_by"`
-	GroupID         string  `json:"group_id"`
+	AddedBy         *int64  `json:"added_by"`
+	GroupID         int64   `json:"group_id"`
 	CreatedAt       int64   `json:"created_at"`
 	UpdatedAt       int64   `json:"updated_at"`
 }
