@@ -24,7 +24,6 @@ const (
 	traefikContainer = "dokpanel-traefik"
 )
 
-// Templates for Traefik configurations
 const traefikYMLTemplate = `global:
   sendAnonymousUsage: false
 providers:
@@ -100,11 +99,8 @@ type TraefikTemplateData struct {
 	DokpanelRule string
 }
 
-// Writes traefik.yml, middlewares.yml, and dokpanel.yml using text/templates.
-func WriteTraefikConfig() error {
-	p := docker.Paths
-
-	// Ensure acme.json has 600 permissions if it exists
+// WriteTraefikConfig writes traefik.yml, middlewares.yml, and dokpanel.yml.
+func writeTraefikConfig(cfg *conf.Config, p *docker.AppPaths) error {
 	acmePath := filepath.Join(p.TRAEFIK_DYN_PATH, "acme.json")
 	if _, err := os.Stat(acmePath); err == nil {
 		if err := os.Chmod(acmePath, 0600); err != nil {
@@ -112,27 +108,24 @@ func WriteTraefikConfig() error {
 		}
 	}
 
-	appName := strings.ToLower(conf.Env.NAME)
-	netName := GetNetworkName()
+	appName := strings.ToLower(cfg.NAME)
+	netName := getNetworkName(cfg)
 
 	data := TraefikTemplateData{
-		IsDev:        conf.Env.IS_DEV,
-		Port:         conf.Env.PORT,
+		IsDev:        cfg.IS_DEV,
+		Port:         cfg.PORT,
 		Name:         appName,
 		NetworkName:  netName,
 		DefaultRule:  "Host(`{{ trimPrefix `/` .Name }}.docker.localhost`)",
 		DokpanelRule: fmt.Sprintf("Host(`%s.docker.localhost`) && PathPrefix(`/`)", appName),
 	}
 
-	// Write traefik.yml
 	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_PATH, "traefik.yml"), traefikYMLTemplate, &data); err != nil {
 		return fmt.Errorf("write traefik.yml: %w", err)
 	}
-	// Write middlewares.yml
 	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, "middlewares.yml"), middlewaresYMLTemplate, &data); err != nil {
 		return fmt.Errorf("write middlewares.yml: %w", err)
 	}
-	// Write dynamic config file (e.g. dokpanel.yml)
 	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, appName+".yml"), dokpanelYMLTemplate, &data); err != nil {
 		return fmt.Errorf("write %s.yml: %w", appName, err)
 	}
@@ -142,7 +135,6 @@ func WriteTraefikConfig() error {
 }
 
 func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) error {
-	// Handle edge case: path exists as directory
 	if info, err := os.Stat(filePath); err == nil {
 		if info.IsDir() {
 			fmt.Printf("warn: path is a directory, removing: %s\n", filePath)
@@ -150,15 +142,12 @@ func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) 
 				return err
 			}
 		} else {
-			// Already exists as file, skip overwriting to be idempotent
 			fmt.Printf("   exists:  %s\n", filePath)
 			return nil
 		}
 	}
 
-	// Make sure dynamic directory exists
-	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
 
@@ -181,32 +170,27 @@ func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) 
 	return nil
 }
 
-// Pulls the Traefik image and starts the container if not running.
-func SetupTraefik(ctx context.Context) error {
-	p := docker.Paths
-	c := docker.Client
-
+// SetupTraefik pulls the Traefik image and starts the container.
+func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *docker.AppPaths) error {
 	fmt.Printf("Pulling Traefik image: %s\n", traefikImage)
 	rc, err := c.ImagePull(ctx, traefikImage, client.ImagePullOptions{})
 	if err != nil {
 		return fmt.Errorf("pull traefik image: %w", err)
 	}
 	defer rc.Close()
-	_, _ = io.Copy(io.Discard, rc) // drain output
+	_, _ = io.Copy(io.Discard, rc)
 	fmt.Println("Traefik image pulled")
 
 	// Remove existing container if any
 	existing, err := c.ContainerInspect(ctx, traefikContainer, client.ContainerInspectOptions{})
 	if err == nil {
 		fmt.Println("Removing existing Traefik container...")
-		// Stop container with timeout
 		stopTimeout := 15
 		_, _ = c.ContainerStop(ctx, existing.Container.ID, client.ContainerStopOptions{Timeout: &stopTimeout})
 		_, _ = c.ContainerRemove(ctx, existing.Container.ID, client.ContainerRemoveOptions{Force: true})
 		time.Sleep(3 * time.Second)
 	}
 
-	// Create container host configuration
 	hostConfig := &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{Name: "always"},
 		Binds: []string{
@@ -223,7 +207,7 @@ func SetupTraefik(ctx context.Context) error {
 
 	networkConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			GetNetworkName(): {},
+			getNetworkName(cfg): {},
 		},
 	}
 
@@ -254,14 +238,14 @@ func SetupTraefik(ctx context.Context) error {
 	return nil
 }
 
-// Checks if the traefik container is already up.
-func IsTraefikRunning(ctx context.Context) bool {
-	containers, err := docker.Client.ContainerList(ctx, client.ContainerListOptions{})
+// IsTraefikRunning checks if the traefik container is already up.
+func isTraefikRunning(ctx context.Context, c *client.Client) bool {
+	containers, err := c.ContainerList(ctx, client.ContainerListOptions{})
 	if err != nil {
 		return false
 	}
-	for _, c := range containers.Items {
-		for _, name := range c.Names {
+	for _, ct := range containers.Items {
+		for _, name := range ct.Names {
 			if name == "/"+traefikContainer {
 				return true
 			}
@@ -270,10 +254,8 @@ func IsTraefikRunning(ctx context.Context) bool {
 	return false
 }
 
-// Stops and removes the Traefik container.
-func TeardownTraefik(ctx context.Context) error {
-	c := docker.Client
-
+// TeardownTraefik stops and removes the Traefik container.
+func teardownTraefik(ctx context.Context, c *client.Client) error {
 	existing, err := c.ContainerInspect(ctx, traefikContainer, client.ContainerInspectOptions{})
 	if err != nil {
 		fmt.Println("Traefik container not found, skipping")

@@ -1,10 +1,10 @@
 package src
 
 import (
-	"dokpanel/src/apis"
+	"time"
+
 	"dokpanel/src/conf"
 	"dokpanel/src/middle"
-	"dokpanel/web"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -13,43 +13,38 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func App() *fiber.App {
+func Fiber(cfg *conf.Config) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:      conf.Env.NAME,
-		BodyLimit:    conf.Env.BODY_LIMIT,
-		ErrorHandler: middle.ErrorHandler,
+		AppName:      cfg.NAME,
+		BodyLimit:    cfg.BODY_LIMIT,
+		ErrorHandler: middle.ErrorHandler(cfg),
+		IdleTimeout:  5 * time.Second,
 	})
 
 	// Stack trace only in dev
 	app.Use(recover.New(recover.Config{
-		EnableStackTrace: conf.Env.IS_DEV,
+		EnableStackTrace: cfg.IS_DEV,
 	}))
 	// Logger Middleware
 	app.Use(logger.New(logger.Config{
 		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
-	// Secure Header
+	// Secure Headers
 	app.Use(helmet.New(helmet.Config{}))
-	// Rate limiting
+	// Rate Limiting
 	app.Use(middle.RateLimit(middle.RateOption{
-		Limit:    conf.Env.RATE_LIMIT_MAX_REQ,
-		WindowMs: conf.Env.RATE_LIMIT_WINDOWS,
+		Limit:    cfg.RATE_LIMIT_MAX_REQ,
+		WindowMs: cfg.RATE_LIMIT_WINDOWS,
 	}))
-	// Cors Origin Middleware
+	// CORS
 	app.Use(cors.New(cors.Config{
 		MaxAge:           86400,
-		AllowOrigins:     []string{conf.Env.CORS_ORIGIN},
+		AllowOrigins:     []string{cfg.CORS_ORIGIN},
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
 		ExposeHeaders:    []string{"Content-Length"},
 	}))
-
-	// Api Router
-	app.Route("/api", apis.Router, "apis")
-
-	// Serve embedded SPA
-	web.ServeSPA(app)
 
 	return app
 }

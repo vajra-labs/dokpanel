@@ -7,10 +7,8 @@ import (
 	"dokpanel/src/lib/docker"
 )
 
-// Setup all necessary directories.
-func SetupDirectories() error {
-	p := docker.Paths
-
+// SetupDirectories creates all necessary directories.
+func setupDirectories(p *docker.AppPaths) error {
 	dirs := []string{
 		p.BASE_PATH,
 		p.TRAEFIK_PATH,
@@ -36,29 +34,26 @@ func SetupDirectories() error {
 	return nil
 }
 
-// Removes the base directory and all its contents.
-func TeardownDirectories() error {
-	base := docker.Paths.BASE_PATH
-
-	if _, err := os.Stat(base); os.IsNotExist(err) {
-		fmt.Printf("Directory %s not found, skipping\n", base)
+// TeardownDirectories removes the base directory and all its contents.
+func teardownDirectories(p *docker.AppPaths) error {
+	if _, err := os.Stat(p.BASE_PATH); os.IsNotExist(err) {
+		fmt.Printf("Directory %s not found, skipping\n", p.BASE_PATH)
 		return nil
 	}
 
-	if err := os.RemoveAll(base); err != nil {
+	if err := os.RemoveAll(p.BASE_PATH); err != nil {
 		return err
 	}
 
-	fmt.Printf("Directory %s removed\n", base)
+	fmt.Printf("Directory %s removed\n", p.BASE_PATH)
 	return nil
 }
 
-// Creates a directory if it doesn't already exist.
+// ensureDir creates a directory if it doesn't already exist.
 func ensureDir(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, 0o755); err != nil {
-			fmt.Printf("error: failed to create directory %s: %v\n", path, err)
-			return err
+			return fmt.Errorf("failed to create directory %s: %w", path, err)
 		}
 		fmt.Printf("   created: %s\n", path)
 		return nil

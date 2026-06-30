@@ -1,25 +1,43 @@
 package tests
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"dokpanel/src"
+	"dokpanel/src/apis"
+	"dokpanel/src/conf"
 	"dokpanel/src/db"
-	_ "dokpanel/src/logger"
+	"dokpanel/src/logger"
 
 	"github.com/gofiber/fiber/v3"
+	"go.uber.org/fx"
 )
 
 var App *fiber.App
 
 func TestMain(m *testing.M) {
-	App = src.App()
+	var fiberApp *fiber.App
 
-	// Run all tests cases
+	fxApp := fx.New(
+		fx.NopLogger,
+		conf.Module,
+		logger.Module,
+		db.Module,
+		apis.Module,
+		fx.Provide(src.Fiber),
+		fx.Populate(&fiberApp),
+	)
+
+	ctx := context.Background()
+	if err := fxApp.Start(ctx); err != nil {
+		panic("fx startup failed: " + err.Error())
+	}
+
+	App = fiberApp
 	code := m.Run()
 
-	// Your cleanup tasks go here
-	db.Pool.Close()
+	_ = fxApp.Stop(ctx)
 	os.Exit(code)
 }

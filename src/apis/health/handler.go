@@ -11,18 +11,12 @@ import (
 )
 
 type Handler struct {
-	version *string
-	env     *string
-	startAt *time.Time
+	cfg *conf.Config
 }
 
-// Health Method
-func NewHandler() *Handler {
-	return &Handler{
-		version: &conf.VERSION,
-		env:     &conf.Env.GO_ENV,
-		startAt: &conf.Env.START_TIME,
-	}
+// NewHandler accepts *conf.Config via fx injection
+func NewHandler(cfg *conf.Config) *Handler {
+	return &Handler{cfg: cfg}
 }
 
 // Server Ping Handler
@@ -39,11 +33,11 @@ func (h *Handler) Pong(ctx fiber.Ctx) error {
 func (h *Handler) Health(ctx fiber.Ctx) error {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	uptime := humanize.Time(*h.startAt)
+	uptime := humanize.Time(h.cfg.START_TIME)
 	result := HealthRes{
 		Uptime:    uptime,
-		Version:   *h.version,
-		GoEnv:     *h.env,
+		Version:   conf.VERSION,
+		GoEnv:     h.cfg.GO_ENV,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Memory: MemoryUsage{
 			Alloc: MemoryInfo{

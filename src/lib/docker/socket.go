@@ -1,17 +1,18 @@
 package docker
 
 import (
-	"dokpanel/src/conf"
 	"fmt"
 	"os"
+
+	"dokpanel/src/conf"
 )
 
-func getCandidates() []string {
+func getCandidates(cfg *conf.Config) []string {
 	var candidates []string
 
-	// Priority 1: from .env / conf (e.g. "unix:///var/run/docker.sock")
-	if conf.Env.DOCKER_HOST != "" {
-		candidates = append(candidates, conf.Env.DOCKER_HOST)
+	// Priority 1: from config (e.g. "unix:///var/run/docker.sock")
+	if cfg.DOCKER_HOST != "" {
+		candidates = append(candidates, cfg.DOCKER_HOST)
 	}
 	// Priority 2 & 3: Rancher Desktop + Colima — both need home dir
 	if home, err := os.UserHomeDir(); err == nil {

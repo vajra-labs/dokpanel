@@ -6,29 +6,22 @@ import (
 	"strings"
 
 	"dokpanel/src/conf"
-	"dokpanel/src/lib/docker"
 
 	"github.com/moby/moby/client"
 )
 
-// Setup Docker Swarm if not already initialized.
-func SetupSwarm(ctx context.Context) error {
-	c := docker.Client
-
-	// Check if Swarm is initialized by inspecting it
+// SetupSwarm initializes Docker Swarm if not already active.
+func setupSwarm(ctx context.Context, c *client.Client) error {
 	_, err := c.SwarmInspect(ctx, client.SwarmInspectOptions{})
 	if err == nil {
 		fmt.Println("Swarm is already initialized")
 		return nil
 	}
 
-	// If SwarmInspect failed, initialize the swarm
-	req := client.SwarmInitOptions{
+	_, err = c.SwarmInit(ctx, client.SwarmInitOptions{
 		AdvertiseAddr: "127.0.0.1",
 		ListenAddr:    "0.0.0.0",
-	}
-
-	_, err = c.SwarmInit(ctx, req)
+	})
 	if err != nil {
 		return err
 	}
@@ -37,30 +30,25 @@ func SetupSwarm(ctx context.Context) error {
 	return nil
 }
 
-// Dynamic overlay network name based on conf.Env.NAME.
-func GetNetworkName() string {
-	return strings.ToLower(conf.Env.NAME) + "-network"
+// GetNetworkName returns the overlay network name derived from config.
+func getNetworkName(cfg *conf.Config) string {
+	return strings.ToLower(cfg.NAME) + "-network"
 }
 
-// Setup docker network if it doesn't exist.
-func SetupNetwork(ctx context.Context) error {
-	c := docker.Client
-	netName := GetNetworkName()
+// SetupNetwork creates the overlay network if it doesn't exist.
+func setupNetwork(ctx context.Context, c *client.Client, cfg *conf.Config) error {
+	netName := getNetworkName(cfg)
 
-	// Check if network already exists
 	_, err := c.NetworkInspect(ctx, netName, client.NetworkInspectOptions{})
 	if err == nil {
 		fmt.Printf("Network %q is already initialized\n", netName)
 		return nil
 	}
 
-	// Create network
-	opts := client.NetworkCreateOptions{
+	_, err = c.NetworkCreate(ctx, netName, client.NetworkCreateOptions{
 		Driver:     "overlay",
 		Attachable: true,
-	}
-
-	_, err = c.NetworkCreate(ctx, netName, opts)
+	})
 	if err != nil {
 		return err
 	}
@@ -69,10 +57,9 @@ func SetupNetwork(ctx context.Context) error {
 	return nil
 }
 
-// Removes the overlay network.
-func TeardownNetwork(ctx context.Context) error {
-	c := docker.Client
-	netName := GetNetworkName()
+// TeardownNetwork removes the overlay network.
+func teardownNetwork(ctx context.Context, c *client.Client, cfg *conf.Config) error {
+	netName := getNetworkName(cfg)
 
 	if _, err := c.NetworkInspect(ctx, netName, client.NetworkInspectOptions{}); err != nil {
 		fmt.Printf("Network %q not found, skipping\n", netName)
@@ -87,10 +74,8 @@ func TeardownNetwork(ctx context.Context) error {
 	return nil
 }
 
-// Leaves Docker Swarm.
-func TeardownSwarm(ctx context.Context) error {
-	c := docker.Client
-
+// TeardownSwarm leaves Docker Swarm.
+func teardownSwarm(ctx context.Context, c *client.Client) error {
 	if _, err := c.SwarmInspect(ctx, client.SwarmInspectOptions{}); err != nil {
 		fmt.Println("Swarm not active, skipping")
 		return nil

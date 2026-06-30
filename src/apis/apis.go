@@ -1,19 +1,26 @@
 package apis
 
 import (
-	"dokpanel/src/apis/auth"
 	"dokpanel/src/apis/health"
-	"dokpanel/src/apis/monitor"
 	"dokpanel/src/middle"
 
 	"github.com/gofiber/fiber/v3"
+	"go.uber.org/fx"
 )
 
-func Router(app fiber.Router) {
-	// Api's Endpoint
-	app.Route("/", health.Router, "health")
-	app.Route("/auth", auth.Router, "auth")
-	app.Route("/monitor", monitor.Router, "monitor")
-	// 404 for unknown API routes
-	app.Use(middle.NotFoundHandler)
+type RouterParams struct {
+	fx.In
+	App           *fiber.App
+	HealthHandler *health.Handler
 }
+
+func Register(p RouterParams) {
+	api := p.App.Group("/api")
+	health.Router(api, p.HealthHandler)
+	api.Use(middle.NotFoundHandler)
+}
+
+var Module = fx.Module("apis",
+	health.Module,
+	fx.Invoke(Register),
+)

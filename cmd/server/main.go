@@ -1,52 +1,57 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	"dokpanel/sqldb"
 	"dokpanel/src"
+	"dokpanel/src/apis"
 	"dokpanel/src/conf"
 	"dokpanel/src/db"
-	"dokpanel/src/lib/docker"
-	_ "dokpanel/src/logger"
+	"dokpanel/src/logger"
+	"dokpanel/web"
 
 	"github.com/gofiber/fiber/v3"
+	"go.uber.org/fx"
 )
 
+func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *conf.Config) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			uri := fmt.Sprintf("%s:%d", cfg.HOST, cfg.PORT)
+			go func() {
+				if err := app.Listen(uri, fiber.ListenConfig{
+					EnablePrefork: false,
+				}); err != nil && !errors.Is(err, net.ErrClosed) {
+					log.Panic(err)
+				}
+			}()
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			fmt.Println("Gracefully shutting down...")
+			if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
+				log.Printf("Shutdown error: %v\n", err)
+			}
+			return nil
+		},
+	})
+}
+
 func main() {
-	docker.Init()
-	sqldb.Migrate(db.Pool)
-
-	app := src.App()
-	uri := fmt.Sprintf("%s:%d", conf.Env.HOST, conf.Env.PORT)
-
-	// Listen from a different goroutine
-	if err := app.Listen(uri, fiber.ListenConfig{
-		EnablePrefork: false,
-	}); err != nil && errors.Is(err, net.ErrClosed) {
-		log.Panic(err)
-	}
-
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer signal.Stop(done)
-
-	<-done // This blocks the main thread until an interrupt is received
-	fmt.Println("\nGracefully shutting down...")
-	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
-		fmt.Printf("Server shutdown failed: %v\n", err)
-	}
-
-	// Your cleanup tasks go here
-	fmt.Println("Running cleanup tasks...")
-	db.Close()
-	docker.Close()
-	fmt.Println("Cleanup completed. Bye 👋")
+	app := fx.New(
+		fx.NopLogger,
+		conf.Module,
+		logger.Module,
+		db.Module,
+		apis.Module,
+		fx.Provide(src.Fiber),
+		fx.Invoke(web.ServeSPA),
+		fx.Invoke(StartServer),
+	)
+	app.Run()
 }

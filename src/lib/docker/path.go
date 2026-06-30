@@ -6,8 +6,6 @@ import (
 	"dokpanel/src/conf"
 )
 
-var Paths *AppPaths
-
 type AppPaths struct {
 	BASE_PATH               string // /etc/dokpanel  OR  ./.docker
 	TRAEFIK_PATH            string // BASE/traefik
@@ -23,9 +21,10 @@ type AppPaths struct {
 	REGISTRY_PATH           string // BASE/registry
 }
 
-func init() {
+// NewPaths builds AppPaths from config.
+func NewPaths(cfg *conf.Config) *AppPaths {
 	base := "./.docker" // dev default
-	if conf.Env.IS_PROD {
+	if cfg.IS_PROD {
 		base = "/etc/dokpanel"
 	}
 	// Docker bind mounts require absolute paths
@@ -34,8 +33,8 @@ func init() {
 	}
 	traefik := filepath.Join(base, "traefik")
 	traefikDyn := filepath.Join(traefik, "dynamic")
-	// Initialize all paths based on base and traefik paths
-	Paths = &AppPaths{
+
+	return &AppPaths{
 		BASE_PATH:               base,
 		TRAEFIK_PATH:            traefik,
 		TRAEFIK_DYN_PATH:        traefikDyn,

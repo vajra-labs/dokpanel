@@ -37,18 +37,17 @@ type Config struct {
 	START_TIME         time.Time
 }
 
-var (
-	Env     *Config
-	VERSION = "dirty" // Overridden with -ldflags
-)
+// Overridden with -ldflags
+var VERSION = "dirty"
 
-func init() {
+// Load all config from .env
+func provideConfig() *Config {
 	ENV_PATH := getEnv("ENV_PATH", ".env")
 	if err := godotenv.Load(ENV_PATH); err != nil {
 		log.Printf("Error: %s file not found: %v\n", ENV_PATH, err)
 	}
 	GO_ENV := getEnv("GO_ENV", types.DEV)
-	Env = &Config{
+	cfg := &Config{
 		NAME:               "DokPanel",
 		PORT:               getEnvInt("PORT", 8000),
 		HOST:               getEnv("HOST", "0.0.0.0"),
@@ -68,8 +67,9 @@ func init() {
 		DOCKER_HOST:        getEnv("DOCKER_HOST"),
 		DOCKER_API_VERSION: getEnv("DOCKER_API_VERSION"),
 	}
-	if err := validator.New().Struct(Env); err != nil {
+	if err := validator.New().Struct(cfg); err != nil {
 		str := fmt.Sprintf("❌ Config validation failed: %v", err)
 		panic(str)
 	}
+	return cfg
 }
