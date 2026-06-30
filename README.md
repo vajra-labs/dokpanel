@@ -137,21 +137,30 @@ DOCKER_API_VERSION="1.41"
 
 ## 🏗️ Architecture
 
-**Handler → Repository → Database**
+**fx (dependency injection) → Handler → Repository → Database**
 
 ```
 cmd/
-└── main.go        # Entry point
+├── server/        # Main server binary
+│   └── main.go    # fx wiring: conf, logger, db, apis, fiber, web
+└── setup/         # One-time setup CLI binary
+    └── main.go    # fx wiring: conf, logger, docker, setup
 
 src/
-├── apis/          # Route handlers (auth, health, ...)
-├── conf/          # Config loading & validation
-├── db/            # Database client & repositories
-├── lib/           # Shared utilities (core errors, ...)
-├── logger/        # Zerolog setup
-├── middle/        # Middleware (error, rate limit)
-├── types/         # Shared enums & types
-└── fiber.go       # Fiber app setup
+├── fiber.go       # Fiber app factory (middleware stack)
+├── apis/          # Route registration & handlers
+│   └── health/    # Health, ping, pong endpoints
+├── conf/          # Config loading & validation (module.go + provider.go)
+├── db/            # Database client & repositories (module.go + provide.go)
+├── lib/
+│   ├── docker/    # Docker client & paths (module.go + client.go)
+│   ├── core/      # Shared error types
+│   ├── process/   # Process utilities
+│   └── utils/     # String helpers
+├── logger/        # Zerolog setup (module.go + provide.go)
+├── middle/        # Error handler, rate limiter, 404
+├── setup/         # Docker Swarm, Traefik, network setup
+└── types/         # Shared enums
 
 web/               # React dashboard (TanStack Router + Tailwind v4)
 ├── src/
@@ -164,8 +173,20 @@ sqldb/             # SQL schema, migrations & sqlc config
 ├── migrate/       # Goose migration files (embedded in binary)
 ├── schema/        # Atlas schema source files
 ├── queries/       # sqlc SQL queries
-├── embed.go       # Embeds migrate/ into Go binary
+├── embed.go       # Embeds migrate/ + runs on startup via goose
 └── tools/         # Atlas post-processor (trigger patch)
+```
+
+### fx Dependency Graph
+
+```
+conf.Module   →  logger.Module
+              →  db.Module      →  sqldb.Migrate (on start)
+              →  docker.Module  →  ping (on start), close (on stop)
+              →  apis.Module    →  health handlers
+              →  src.Fiber      →  middleware stack
+              →  web.ServeSPA   →  embedded React SPA
+              →  StartServer    →  listen (on start), shutdown (on stop)
 ```
 
 ### `web/` — Frontend Dashboard
