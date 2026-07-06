@@ -4,13 +4,229 @@
 
 package repos
 
-type ActivityLog struct {
-	ID        int64  `json:"id"`
-	UserID    int64  `json:"user_id"`
-	Activity  string `json:"activity"`
-	Source    string `json:"source"`
-	ClientIp  string `json:"client_ip"`
-	CreatedAt int64  `json:"created_at"`
+type AiSetting struct {
+	ID             int64  `json:"id"`
+	Name           string `json:"name"`
+	ApiUrl         string `json:"api_url"`
+	ApiKey         string `json:"api_key"`
+	Model          string `json:"model"`
+	IsEnabled      int64  `json:"is_enabled"`
+	OrganizationID int64  `json:"organization_id"`
+	CreatedAt      int64  `json:"created_at"`
+	UpdatedAt      int64  `json:"updated_at"`
+}
+
+type Application struct {
+	ID                                    int64   `json:"id"`
+	Name                                  string  `json:"name"`
+	AppName                               string  `json:"app_name"`
+	Description                           *string `json:"description"`
+	SourceType                            string  `json:"source_type"`
+	BuildType                             string  `json:"build_type"`
+	AppStatus                             string  `json:"app_status"`
+	TriggerType                           string  `json:"trigger_type"`
+	BuildArgs                             *string `json:"build_args"`
+	BuildSecrets                          *string `json:"build_secrets"`
+	Dockerfile                            *string `json:"dockerfile"`
+	DockerContextPath                     *string `json:"docker_context_path"`
+	DockerBuildStage                      *string `json:"docker_build_stage"`
+	PublishDirectory                      *string `json:"publish_directory"`
+	IsStaticSpa                           *int64  `json:"is_static_spa"`
+	CreateEnvFile                         int64   `json:"create_env_file"`
+	RailpackVersion                       *string `json:"railpack_version"`
+	HerokuVersion                         *string `json:"heroku_version"`
+	Command                               *string `json:"command"`
+	Args                                  *string `json:"args"`
+	EnvVar                                *string `json:"env_var"`
+	BuildPath                             *string `json:"build_path"`
+	CleanCache                            int64   `json:"clean_cache"`
+	DropBuildPath                         *string `json:"drop_build_path"`
+	EnableSubmodules                      int64   `json:"enable_submodules"`
+	WatchPaths                            *string `json:"watch_paths"`
+	RefreshToken                          *string `json:"refresh_token"`
+	Icon                                  *string `json:"icon"`
+	MemoryReservation                     *string `json:"memory_reservation"`
+	MemoryLimit                           *string `json:"memory_limit"`
+	CpuReservation                        *string `json:"cpu_reservation"`
+	CpuLimit                              *string `json:"cpu_limit"`
+	Replicas                              int64   `json:"replicas"`
+	HealthCheckSwarm                      *string `json:"health_check_swarm"`
+	RestartPolicySwarm                    *string `json:"restart_policy_swarm"`
+	PlacementSwarm                        *string `json:"placement_swarm"`
+	UpdateConfigSwarm                     *string `json:"update_config_swarm"`
+	RollbackConfigSwarm                   *string `json:"rollback_config_swarm"`
+	ModeSwarm                             *string `json:"mode_swarm"`
+	LabelsSwarm                           *string `json:"labels_swarm"`
+	NetworkSwarm                          *string `json:"network_swarm"`
+	EndpointSpecSwarm                     *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm                          *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm                  *int64  `json:"stop_grace_period_swarm"`
+	Repository                            *string `json:"repository"`
+	Owner                                 *string `json:"owner"`
+	Branch                                *string `json:"branch"`
+	AutoDeploy                            *int64  `json:"auto_deploy"`
+	GitlabProjectID                       *int64  `json:"gitlab_project_id"`
+	GitlabRepository                      *string `json:"gitlab_repository"`
+	GitlabOwner                           *string `json:"gitlab_owner"`
+	GitlabBranch                          *string `json:"gitlab_branch"`
+	GitlabBuildPath                       *string `json:"gitlab_build_path"`
+	GitlabPathNamespace                   *string `json:"gitlab_path_namespace"`
+	GiteaRepository                       *string `json:"gitea_repository"`
+	GiteaOwner                            *string `json:"gitea_owner"`
+	GiteaBranch                           *string `json:"gitea_branch"`
+	GiteaBuildPath                        *string `json:"gitea_build_path"`
+	BitbucketRepository                   *string `json:"bitbucket_repository"`
+	BitbucketRepositorySlug               *string `json:"bitbucket_repository_slug"`
+	BitbucketOwner                        *string `json:"bitbucket_owner"`
+	BitbucketBranch                       *string `json:"bitbucket_branch"`
+	BitbucketBuildPath                    *string `json:"bitbucket_build_path"`
+	DockerImage                           *string `json:"docker_image"`
+	DockerUsername                        *string `json:"docker_username"`
+	DockerPassword                        *string `json:"docker_password"`
+	RegistryUrl                           *string `json:"registry_url"`
+	CustomGitUrl                          *string `json:"custom_git_url"`
+	CustomGitBranch                       *string `json:"custom_git_branch"`
+	CustomGitBuildPath                    *string `json:"custom_git_build_path"`
+	CustomGitSshKeyID                     *int64  `json:"custom_git_ssh_key_id"`
+	PreviewEnv                            *string `json:"preview_env"`
+	PreviewBuildArgs                      *string `json:"preview_build_args"`
+	PreviewBuildSecrets                   *string `json:"preview_build_secrets"`
+	PreviewLabels                         *string `json:"preview_labels"`
+	PreviewWildcard                       *string `json:"preview_wildcard"`
+	PreviewPort                           *int64  `json:"preview_port"`
+	PreviewHttps                          int64   `json:"preview_https"`
+	PreviewPath                           *string `json:"preview_path"`
+	PreviewCertificateType                string  `json:"preview_certificate_type"`
+	PreviewCustomCertResolver             *string `json:"preview_custom_cert_resolver"`
+	PreviewLimit                          *int64  `json:"preview_limit"`
+	IsPreviewDeploymentsActive            int64   `json:"is_preview_deployments_active"`
+	PreviewRequireCollaboratorPermissions int64   `json:"preview_require_collaborator_permissions"`
+	RollbackActive                        int64   `json:"rollback_active"`
+	EnvironmentID                         int64   `json:"environment_id"`
+	ServerID                              *int64  `json:"server_id"`
+	BuildServerID                         *int64  `json:"build_server_id"`
+	RegistryID                            *int64  `json:"registry_id"`
+	RollbackRegistryID                    *int64  `json:"rollback_registry_id"`
+	BuildRegistryID                       *int64  `json:"build_registry_id"`
+	GithubProviderID                      *int64  `json:"github_provider_id"`
+	GitlabProviderID                      *int64  `json:"gitlab_provider_id"`
+	GiteaProviderID                       *int64  `json:"gitea_provider_id"`
+	BitbucketProviderID                   *int64  `json:"bitbucket_provider_id"`
+	CreatedAt                             int64   `json:"created_at"`
+	UpdatedAt                             int64   `json:"updated_at"`
+}
+
+type AuditLog struct {
+	ID             int64   `json:"id"`
+	UserEmail      string  `json:"user_email"`
+	UserRole       string  `json:"user_role"`
+	Action         string  `json:"action"`
+	ResourceType   string  `json:"resource_type"`
+	ResourceID     *string `json:"resource_id"`
+	ResourceName   *string `json:"resource_name"`
+	Metadata       *string `json:"metadata"`
+	OrganizationID *int64  `json:"organization_id"`
+	UserID         *int64  `json:"user_id"`
+	CreatedAt      int64   `json:"created_at"`
+}
+
+type Backup struct {
+	ID              int64   `json:"id"`
+	AppName         string  `json:"app_name"`
+	Schedule        string  `json:"schedule"`
+	Enabled         int64   `json:"enabled"`
+	DatabaseName    string  `json:"database_name"`
+	Prefix          string  `json:"prefix"`
+	ServiceName     *string `json:"service_name"`
+	KeepLatestCount *int64  `json:"keep_latest_count"`
+	BackupType      string  `json:"backup_type"`
+	DatabaseType    string  `json:"database_type"`
+	Metadata        *string `json:"metadata"`
+	ComposeID       *int64  `json:"compose_id"`
+	PostgresID      *int64  `json:"postgres_id"`
+	MysqlID         *int64  `json:"mysql_id"`
+	MariadbID       *int64  `json:"mariadb_id"`
+	MongoID         *int64  `json:"mongo_id"`
+	RedisID         *int64  `json:"redis_id"`
+	LibsqlID        *int64  `json:"libsql_id"`
+	DestinationID   int64   `json:"destination_id"`
+	OrganizationID  int64   `json:"organization_id"`
+	CreatedAt       int64   `json:"created_at"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
+type BitbucketProvider struct {
+	ID                     int64   `json:"id"`
+	BitbucketUsername      *string `json:"bitbucket_username"`
+	BitbucketEmail         *string `json:"bitbucket_email"`
+	AppPassword            *string `json:"app_password"`
+	ApiToken               *string `json:"api_token"`
+	BitbucketWorkspaceName *string `json:"bitbucket_workspace_name"`
+	GitProviderID          int64   `json:"git_provider_id"`
+	CreatedAt              int64   `json:"created_at"`
+	UpdatedAt              int64   `json:"updated_at"`
+}
+
+type Certificate struct {
+	ID              int64  `json:"id"`
+	Name            string `json:"name"`
+	CertificateData string `json:"certificate_data"`
+	PrivateKey      string `json:"private_key"`
+	CertificatePath string `json:"certificate_path"`
+	AutoRenew       int64  `json:"auto_renew"`
+	ServerID        *int64 `json:"server_id"`
+	OrganizationID  int64  `json:"organization_id"`
+	CreatedAt       int64  `json:"created_at"`
+	UpdatedAt       int64  `json:"updated_at"`
+}
+
+type ComposeProject struct {
+	ID                        int64   `json:"id"`
+	Name                      string  `json:"name"`
+	AppName                   string  `json:"app_name"`
+	Description               *string `json:"description"`
+	EnvVar                    *string `json:"env_var"`
+	ComposeFile               string  `json:"compose_file"`
+	RefreshToken              *string `json:"refresh_token"`
+	SourceType                string  `json:"source_type"`
+	ComposeType               string  `json:"compose_type"`
+	ComposeStatus             string  `json:"compose_status"`
+	TriggerType               string  `json:"trigger_type"`
+	Repository                *string `json:"repository"`
+	Owner                     *string `json:"owner"`
+	Branch                    *string `json:"branch"`
+	AutoDeploy                int64   `json:"auto_deploy"`
+	GitlabProjectID           *int64  `json:"gitlab_project_id"`
+	GitlabRepository          *string `json:"gitlab_repository"`
+	GitlabOwner               *string `json:"gitlab_owner"`
+	GitlabBranch              *string `json:"gitlab_branch"`
+	GitlabPathNamespace       *string `json:"gitlab_path_namespace"`
+	BitbucketRepository       *string `json:"bitbucket_repository"`
+	BitbucketRepositorySlug   *string `json:"bitbucket_repository_slug"`
+	BitbucketOwner            *string `json:"bitbucket_owner"`
+	BitbucketBranch           *string `json:"bitbucket_branch"`
+	GiteaRepository           *string `json:"gitea_repository"`
+	GiteaOwner                *string `json:"gitea_owner"`
+	GiteaBranch               *string `json:"gitea_branch"`
+	CustomGitUrl              *string `json:"custom_git_url"`
+	CustomGitBranch           *string `json:"custom_git_branch"`
+	CustomGitSshKeyID         *int64  `json:"custom_git_ssh_key_id"`
+	Command                   string  `json:"command"`
+	EnableSubmodules          int64   `json:"enable_submodules"`
+	ComposePath               string  `json:"compose_path"`
+	Suffix                    string  `json:"suffix"`
+	Randomize                 int64   `json:"randomize"`
+	IsolatedDeployment        int64   `json:"isolated_deployment"`
+	IsolatedDeploymentsVolume int64   `json:"isolated_deployments_volume"`
+	WatchPaths                *string `json:"watch_paths"`
+	EnvironmentID             int64   `json:"environment_id"`
+	ServerID                  *int64  `json:"server_id"`
+	GithubProviderID          *int64  `json:"github_provider_id"`
+	GitlabProviderID          *int64  `json:"gitlab_provider_id"`
+	GiteaProviderID           *int64  `json:"gitea_provider_id"`
+	BitbucketProviderID       *int64  `json:"bitbucket_provider_id"`
+	CreatedAt                 int64   `json:"created_at"`
+	UpdatedAt                 int64   `json:"updated_at"`
 }
 
 type ContainerMetric struct {
@@ -19,6 +235,125 @@ type ContainerMetric struct {
 	ContainerID   string `json:"container_id"`
 	ContainerName string `json:"container_name"`
 	MetricsJson   string `json:"metrics_json"`
+}
+
+type Deployment struct {
+	ID                  int64   `json:"id"`
+	Title               string  `json:"title"`
+	Description         *string `json:"description"`
+	Status              string  `json:"status"`
+	LogPath             string  `json:"log_path"`
+	Pid                 *string `json:"pid"`
+	ErrorMessage        *string `json:"error_message"`
+	IsPreviewDeployment int64   `json:"is_preview_deployment"`
+	StartedAt           *int64  `json:"started_at"`
+	FinishedAt          *int64  `json:"finished_at"`
+	ApplicationID       *int64  `json:"application_id"`
+	ComposeID           *int64  `json:"compose_id"`
+	ServerID            *int64  `json:"server_id"`
+	CreatedAt           int64   `json:"created_at"`
+}
+
+type Destination struct {
+	ID              int64   `json:"id"`
+	Name            string  `json:"name"`
+	Provider        string  `json:"provider"`
+	AccessKey       string  `json:"access_key"`
+	SecretAccessKey string  `json:"secret_access_key"`
+	Bucket          string  `json:"bucket"`
+	Region          string  `json:"region"`
+	Endpoint        string  `json:"endpoint"`
+	AdditionalFlags *string `json:"additional_flags"`
+	OrganizationID  int64   `json:"organization_id"`
+	CreatedAt       int64   `json:"created_at"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
+type Domain struct {
+	ID                 int64   `json:"id"`
+	Host               string  `json:"host"`
+	Https              int64   `json:"https"`
+	Port               *int64  `json:"port"`
+	Path               *string `json:"path"`
+	InternalPath       *string `json:"internal_path"`
+	CustomEntrypoint   *string `json:"custom_entrypoint"`
+	ServiceName        *string `json:"service_name"`
+	CustomCertResolver *string `json:"custom_cert_resolver"`
+	StripPath          int64   `json:"strip_path"`
+	Middlewares        string  `json:"middlewares"`
+	DomainType         string  `json:"domain_type"`
+	CertificateType    string  `json:"certificate_type"`
+	ApplicationID      *int64  `json:"application_id"`
+	ComposeID          *int64  `json:"compose_id"`
+	CreatedAt          int64   `json:"created_at"`
+	UpdatedAt          int64   `json:"updated_at"`
+}
+
+type Environment struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	EnvVar      string  `json:"env_var"`
+	IsDefault   int64   `json:"is_default"`
+	ProjectID   int64   `json:"project_id"`
+	CreatedAt   int64   `json:"created_at"`
+	UpdatedAt   int64   `json:"updated_at"`
+}
+
+type GitProvider struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	ProviderType string `json:"provider_type"`
+	Shared       int64  `json:"shared"`
+	CreatedAt    int64  `json:"created_at"`
+	UpdatedAt    int64  `json:"updated_at"`
+}
+
+type GiteaProvider struct {
+	ID                  int64   `json:"id"`
+	GiteaUrl            string  `json:"gitea_url"`
+	GiteaInternalUrl    *string `json:"gitea_internal_url"`
+	RedirectUri         *string `json:"redirect_uri"`
+	ClientID            *string `json:"client_id"`
+	ClientSecret        *string `json:"client_secret"`
+	AccessToken         *string `json:"access_token"`
+	RefreshToken        *string `json:"refresh_token"`
+	ExpiresAt           *int64  `json:"expires_at"`
+	Scopes              *string `json:"scopes"`
+	LastAuthenticatedAt *int64  `json:"last_authenticated_at"`
+	GitProviderID       int64   `json:"git_provider_id"`
+	CreatedAt           int64   `json:"created_at"`
+	UpdatedAt           int64   `json:"updated_at"`
+}
+
+type GithubProvider struct {
+	ID                   int64   `json:"id"`
+	GithubAppName        *string `json:"github_app_name"`
+	GithubAppID          *int64  `json:"github_app_id"`
+	GithubClientID       *string `json:"github_client_id"`
+	GithubClientSecret   *string `json:"github_client_secret"`
+	GithubInstallationID *string `json:"github_installation_id"`
+	GithubPrivateKey     *string `json:"github_private_key"`
+	GithubWebhookSecret  *string `json:"github_webhook_secret"`
+	GitProviderID        int64   `json:"git_provider_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type GitlabProvider struct {
+	ID                int64   `json:"id"`
+	GitlabUrl         string  `json:"gitlab_url"`
+	GitlabInternalUrl *string `json:"gitlab_internal_url"`
+	ApplicationID     *string `json:"application_id"`
+	RedirectUri       *string `json:"redirect_uri"`
+	Secret            *string `json:"secret"`
+	AccessToken       *string `json:"access_token"`
+	RefreshToken      *string `json:"refresh_token"`
+	GroupName         *string `json:"group_name"`
+	ExpiresAt         *int64  `json:"expires_at"`
+	GitProviderID     int64   `json:"git_provider_id"`
+	CreatedAt         int64   `json:"created_at"`
+	UpdatedAt         int64   `json:"updated_at"`
 }
 
 type Group struct {
@@ -47,10 +382,513 @@ type JwtToken struct {
 	UpdatedAt   int64  `json:"updated_at"`
 }
 
+type LibsqlDb struct {
+	ID                   int64   `json:"id"`
+	Name                 string  `json:"name"`
+	AppName              string  `json:"app_name"`
+	Description          *string `json:"description"`
+	DockerImage          string  `json:"docker_image"`
+	DatabaseUser         string  `json:"database_user"`
+	DatabasePassword     string  `json:"database_password"`
+	SqldNode             string  `json:"sqld_node"`
+	SqldPrimaryUrl       *string `json:"sqld_primary_url"`
+	EnableNamespaces     int64   `json:"enable_namespaces"`
+	ExternalPort         *int64  `json:"external_port"`
+	ExternalGrpcPort     *int64  `json:"external_grpc_port"`
+	ExternalAdminPort    *int64  `json:"external_admin_port"`
+	Command              *string `json:"command"`
+	Args                 *string `json:"args"`
+	EnvVar               *string `json:"env_var"`
+	MemoryReservation    *string `json:"memory_reservation"`
+	MemoryLimit          *string `json:"memory_limit"`
+	CpuReservation       *string `json:"cpu_reservation"`
+	CpuLimit             *string `json:"cpu_limit"`
+	Replicas             int64   `json:"replicas"`
+	AppStatus            string  `json:"app_status"`
+	HealthCheckSwarm     *string `json:"health_check_swarm"`
+	RestartPolicySwarm   *string `json:"restart_policy_swarm"`
+	PlacementSwarm       *string `json:"placement_swarm"`
+	UpdateConfigSwarm    *string `json:"update_config_swarm"`
+	RollbackConfigSwarm  *string `json:"rollback_config_swarm"`
+	ModeSwarm            *string `json:"mode_swarm"`
+	LabelsSwarm          *string `json:"labels_swarm"`
+	NetworkSwarm         *string `json:"network_swarm"`
+	EndpointSpecSwarm    *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm         *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm *int64  `json:"stop_grace_period_swarm"`
+	EnvironmentID        int64   `json:"environment_id"`
+	ServerID             *int64  `json:"server_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type MariadbDb struct {
+	ID                   int64   `json:"id"`
+	Name                 string  `json:"name"`
+	AppName              string  `json:"app_name"`
+	Description          *string `json:"description"`
+	DockerImage          string  `json:"docker_image"`
+	DatabaseName         string  `json:"database_name"`
+	DatabaseUser         string  `json:"database_user"`
+	DatabasePassword     string  `json:"database_password"`
+	DatabaseRootPassword string  `json:"database_root_password"`
+	ExternalPort         *int64  `json:"external_port"`
+	Command              *string `json:"command"`
+	Args                 *string `json:"args"`
+	EnvVar               *string `json:"env_var"`
+	MemoryReservation    *string `json:"memory_reservation"`
+	MemoryLimit          *string `json:"memory_limit"`
+	CpuReservation       *string `json:"cpu_reservation"`
+	CpuLimit             *string `json:"cpu_limit"`
+	Replicas             int64   `json:"replicas"`
+	AppStatus            string  `json:"app_status"`
+	HealthCheckSwarm     *string `json:"health_check_swarm"`
+	RestartPolicySwarm   *string `json:"restart_policy_swarm"`
+	PlacementSwarm       *string `json:"placement_swarm"`
+	UpdateConfigSwarm    *string `json:"update_config_swarm"`
+	RollbackConfigSwarm  *string `json:"rollback_config_swarm"`
+	ModeSwarm            *string `json:"mode_swarm"`
+	LabelsSwarm          *string `json:"labels_swarm"`
+	NetworkSwarm         *string `json:"network_swarm"`
+	EndpointSpecSwarm    *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm         *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm *int64  `json:"stop_grace_period_swarm"`
+	EnvironmentID        int64   `json:"environment_id"`
+	ServerID             *int64  `json:"server_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type MongoDb struct {
+	ID                  int64   `json:"id"`
+	Name                string  `json:"name"`
+	AppName             string  `json:"app_name"`
+	Description         *string `json:"description"`
+	DockerImage         string  `json:"docker_image"`
+	DatabaseUser        string  `json:"database_user"`
+	DatabasePassword    string  `json:"database_password"`
+	ExternalPort        *int64  `json:"external_port"`
+	ReplicaSets         int64   `json:"replica_sets"`
+	Command             *string `json:"command"`
+	Args                *string `json:"args"`
+	EnvVar              *string `json:"env_var"`
+	MemoryReservation   *string `json:"memory_reservation"`
+	MemoryLimit         *string `json:"memory_limit"`
+	CpuReservation      *string `json:"cpu_reservation"`
+	CpuLimit            *string `json:"cpu_limit"`
+	Replicas            int64   `json:"replicas"`
+	AppStatus           string  `json:"app_status"`
+	HealthCheckSwarm    *string `json:"health_check_swarm"`
+	RestartPolicySwarm  *string `json:"restart_policy_swarm"`
+	PlacementSwarm      *string `json:"placement_swarm"`
+	UpdateConfigSwarm   *string `json:"update_config_swarm"`
+	RollbackConfigSwarm *string `json:"rollback_config_swarm"`
+	ModeSwarm           *string `json:"mode_swarm"`
+	LabelsSwarm         *string `json:"labels_swarm"`
+	NetworkSwarm        *string `json:"network_swarm"`
+	EndpointSpecSwarm   *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm        *string `json:"ulimits_swarm"`
+	StopGracePeriodWarm *int64  `json:"stop_grace_period_warm"`
+	EnvironmentID       int64   `json:"environment_id"`
+	ServerID            *int64  `json:"server_id"`
+	CreatedAt           int64   `json:"created_at"`
+	UpdatedAt           int64   `json:"updated_at"`
+}
+
+type Mount struct {
+	ID            int64   `json:"id"`
+	MountType     string  `json:"mount_type"`
+	ServiceType   string  `json:"service_type"`
+	HostPath      *string `json:"host_path"`
+	VolumeName    *string `json:"volume_name"`
+	FilePath      *string `json:"file_path"`
+	Content       *string `json:"content"`
+	MountPath     string  `json:"mount_path"`
+	PostgresID    *int64  `json:"postgres_id"`
+	MysqlID       *int64  `json:"mysql_id"`
+	MariadbID     *int64  `json:"mariadb_id"`
+	MongoID       *int64  `json:"mongo_id"`
+	RedisID       *int64  `json:"redis_id"`
+	LibsqlID      *int64  `json:"libsql_id"`
+	ComposeID     *int64  `json:"compose_id"`
+	ApplicationID *int64  `json:"application_id"`
+	CreatedAt     int64   `json:"created_at"`
+	UpdatedAt     int64   `json:"updated_at"`
+}
+
+type MysqlDb struct {
+	ID                   int64   `json:"id"`
+	Name                 string  `json:"name"`
+	AppName              string  `json:"app_name"`
+	Description          *string `json:"description"`
+	DockerImage          string  `json:"docker_image"`
+	DatabaseName         string  `json:"database_name"`
+	DatabaseUser         string  `json:"database_user"`
+	DatabasePassword     string  `json:"database_password"`
+	DatabaseRootPassword string  `json:"database_root_password"`
+	ExternalPort         *int64  `json:"external_port"`
+	Command              *string `json:"command"`
+	Args                 *string `json:"args"`
+	EnvVar               *string `json:"env_var"`
+	MemoryReservation    *string `json:"memory_reservation"`
+	MemoryLimit          *string `json:"memory_limit"`
+	CpuReservation       *string `json:"cpu_reservation"`
+	CpuLimit             *string `json:"cpu_limit"`
+	Replicas             int64   `json:"replicas"`
+	AppStatus            string  `json:"app_status"`
+	HealthCheckSwarm     *string `json:"health_check_swarm"`
+	RestartPolicySwarm   *string `json:"restart_policy_swarm"`
+	PlacementSwarm       *string `json:"placement_swarm"`
+	UpdateConfigSwarm    *string `json:"update_config_swarm"`
+	RollbackConfigSwarm  *string `json:"rollback_config_swarm"`
+	ModeSwarm            *string `json:"mode_swarm"`
+	LabelsSwarm          *string `json:"labels_swarm"`
+	NetworkSwarm         *string `json:"network_swarm"`
+	EndpointSpecSwarm    *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm         *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm *int64  `json:"stop_grace_period_swarm"`
+	EnvironmentID        int64   `json:"environment_id"`
+	ServerID             *int64  `json:"server_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type NotifCustom struct {
+	ID       int64   `json:"id"`
+	Endpoint string  `json:"endpoint"`
+	Headers  *string `json:"headers"`
+}
+
+type NotifDiscord struct {
+	ID         int64  `json:"id"`
+	WebhookUrl string `json:"webhook_url"`
+	Decoration int64  `json:"decoration"`
+}
+
+type NotifEmail struct {
+	ID          int64  `json:"id"`
+	SmtpServer  string `json:"smtp_server"`
+	SmtpPort    int64  `json:"smtp_port"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	FromAddress string `json:"from_address"`
+	ToAddresses string `json:"to_addresses"`
+}
+
+type NotifGotify struct {
+	ID         int64  `json:"id"`
+	ServerUrl  string `json:"server_url"`
+	AppToken   string `json:"app_token"`
+	Priority   int64  `json:"priority"`
+	Decoration int64  `json:"decoration"`
+}
+
+type NotifLark struct {
+	ID         int64  `json:"id"`
+	WebhookUrl string `json:"webhook_url"`
+}
+
+type NotifMattermost struct {
+	ID         int64   `json:"id"`
+	WebhookUrl string  `json:"webhook_url"`
+	Channel    *string `json:"channel"`
+	Username   *string `json:"username"`
+}
+
+type NotifNtfy struct {
+	ID          int64   `json:"id"`
+	ServerUrl   string  `json:"server_url"`
+	Topic       string  `json:"topic"`
+	AccessToken *string `json:"access_token"`
+	Priority    int64   `json:"priority"`
+}
+
+type NotifPushover struct {
+	ID       int64  `json:"id"`
+	UserKey  string `json:"user_key"`
+	ApiToken string `json:"api_token"`
+	Priority int64  `json:"priority"`
+	Retry    *int64 `json:"retry"`
+	Expire   *int64 `json:"expire"`
+}
+
+type NotifResend struct {
+	ID          int64  `json:"id"`
+	ApiKey      string `json:"api_key"`
+	FromAddress string `json:"from_address"`
+	ToAddresses string `json:"to_addresses"`
+}
+
+type NotifSlack struct {
+	ID         int64   `json:"id"`
+	WebhookUrl string  `json:"webhook_url"`
+	Channel    *string `json:"channel"`
+}
+
+type NotifTeam struct {
+	ID         int64  `json:"id"`
+	WebhookUrl string `json:"webhook_url"`
+}
+
+type NotifTelegram struct {
+	ID              int64   `json:"id"`
+	BotToken        string  `json:"bot_token"`
+	ChatID          string  `json:"chat_id"`
+	MessageThreadID *string `json:"message_thread_id"`
+}
+
+type Notification struct {
+	ID                int64  `json:"id"`
+	Name              string `json:"name"`
+	NotificationType  string `json:"notification_type"`
+	OnAppDeploy       int64  `json:"on_app_deploy"`
+	OnAppBuildError   int64  `json:"on_app_build_error"`
+	OnDatabaseBackup  int64  `json:"on_database_backup"`
+	OnVolumeBackup    int64  `json:"on_volume_backup"`
+	OnPanelRestart    int64  `json:"on_panel_restart"`
+	OnDockerCleanup   int64  `json:"on_docker_cleanup"`
+	OnServerThreshold int64  `json:"on_server_threshold"`
+	SlackID           *int64 `json:"slack_id"`
+	TelegramID        *int64 `json:"telegram_id"`
+	DiscordID         *int64 `json:"discord_id"`
+	EmailID           *int64 `json:"email_id"`
+	ResendID          *int64 `json:"resend_id"`
+	GotifyID          *int64 `json:"gotify_id"`
+	NtfyID            *int64 `json:"ntfy_id"`
+	MattermostID      *int64 `json:"mattermost_id"`
+	CustomID          *int64 `json:"custom_id"`
+	LarkID            *int64 `json:"lark_id"`
+	PushoverID        *int64 `json:"pushover_id"`
+	TeamsID           *int64 `json:"teams_id"`
+	OrganizationID    int64  `json:"organization_id"`
+	CreatedAt         int64  `json:"created_at"`
+	UpdatedAt         int64  `json:"updated_at"`
+}
+
+type Organization struct {
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	Logo      *string `json:"logo"`
+	Slug      string  `json:"slug"`
+	OwnerID   int64   `json:"owner_id"`
+	CreatedAt int64   `json:"created_at"`
+	UpdatedAt int64   `json:"updated_at"`
+}
+
+type OrganizationInvite struct {
+	ID             int64   `json:"id"`
+	Email          string  `json:"email"`
+	Role           *string `json:"role"`
+	Status         *string `json:"status"`
+	Token          string  `json:"token"`
+	GroupID        int64   `json:"group_id"`
+	OrganizationID int64   `json:"organization_id"`
+	InvitedBy      int64   `json:"invited_by"`
+	ExpiredAt      int64   `json:"expired_at"`
+	CreatedAt      int64   `json:"created_at"`
+}
+
+type OrganizationMember struct {
+	ID             int64   `json:"id"`
+	Role           *string `json:"role"`
+	UserID         int64   `json:"user_id"`
+	OrganizationID int64   `json:"organization_id"`
+	CreatedAt      int64   `json:"created_at"`
+	UpdatedAt      int64   `json:"updated_at"`
+}
+
+type Patch struct {
+	ID            int64  `json:"id"`
+	PatchType     string `json:"patch_type"`
+	FilePath      string `json:"file_path"`
+	Enabled       int64  `json:"enabled"`
+	Content       string `json:"content"`
+	ApplicationID *int64 `json:"application_id"`
+	ComposeID     *int64 `json:"compose_id"`
+	CreatedAt     int64  `json:"created_at"`
+	UpdatedAt     int64  `json:"updated_at"`
+}
+
 type Policy struct {
 	ID        int64  `json:"id"`
 	Action    string `json:"action"`
 	CreatedAt int64  `json:"created_at"`
+}
+
+type Port struct {
+	ID            int64  `json:"id"`
+	PublishedPort int64  `json:"published_port"`
+	TargetPort    int64  `json:"target_port"`
+	Protocol      string `json:"protocol"`
+	PublishMode   string `json:"publish_mode"`
+	ApplicationID int64  `json:"application_id"`
+	CreatedAt     int64  `json:"created_at"`
+}
+
+type PostgresDb struct {
+	ID                   int64   `json:"id"`
+	Name                 string  `json:"name"`
+	AppName              string  `json:"app_name"`
+	Description          *string `json:"description"`
+	DockerImage          string  `json:"docker_image"`
+	DatabaseName         string  `json:"database_name"`
+	DatabaseUser         string  `json:"database_user"`
+	DatabasePassword     string  `json:"database_password"`
+	ExternalPort         *int64  `json:"external_port"`
+	Command              *string `json:"command"`
+	Args                 *string `json:"args"`
+	EnvVar               *string `json:"env_var"`
+	MemoryReservation    *string `json:"memory_reservation"`
+	MemoryLimit          *string `json:"memory_limit"`
+	CpuReservation       *string `json:"cpu_reservation"`
+	CpuLimit             *string `json:"cpu_limit"`
+	Replicas             int64   `json:"replicas"`
+	AppStatus            string  `json:"app_status"`
+	HealthCheckSwarm     *string `json:"health_check_swarm"`
+	RestartPolicySwarm   *string `json:"restart_policy_swarm"`
+	PlacementSwarm       *string `json:"placement_swarm"`
+	UpdateConfigSwarm    *string `json:"update_config_swarm"`
+	RollbackConfigSwarm  *string `json:"rollback_config_swarm"`
+	ModeSwarm            *string `json:"mode_swarm"`
+	LabelsSwarm          *string `json:"labels_swarm"`
+	NetworkSwarm         *string `json:"network_swarm"`
+	EndpointSpecSwarm    *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm         *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm *int64  `json:"stop_grace_period_swarm"`
+	EnvironmentID        int64   `json:"environment_id"`
+	ServerID             *int64  `json:"server_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type Project struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Description    *string `json:"description"`
+	EnvVar         string  `json:"env_var"`
+	OrganizationID int64   `json:"organization_id"`
+	CreatedAt      int64   `json:"created_at"`
+	UpdatedAt      int64   `json:"updated_at"`
+}
+
+type ProjectTag struct {
+	ID        int64 `json:"id"`
+	ProjectID int64 `json:"project_id"`
+	TagID     int64 `json:"tag_id"`
+}
+
+type Redirect struct {
+	ID              int64  `json:"id"`
+	Regex           string `json:"regex"`
+	Replacement     string `json:"replacement"`
+	Permanent       int64  `json:"permanent"`
+	UniqueConfigKey *int64 `json:"unique_config_key"`
+	ApplicationID   int64  `json:"application_id"`
+	CreatedAt       int64  `json:"created_at"`
+	UpdatedAt       int64  `json:"updated_at"`
+}
+
+type RedisDb struct {
+	ID                   int64   `json:"id"`
+	Name                 string  `json:"name"`
+	AppName              string  `json:"app_name"`
+	Description          *string `json:"description"`
+	DockerImage          string  `json:"docker_image"`
+	DatabasePassword     string  `json:"database_password"`
+	ExternalPort         *int64  `json:"external_port"`
+	Command              *string `json:"command"`
+	Args                 *string `json:"args"`
+	EnvVar               *string `json:"env_var"`
+	MemoryReservation    *string `json:"memory_reservation"`
+	MemoryLimit          *string `json:"memory_limit"`
+	CpuReservation       *string `json:"cpu_reservation"`
+	CpuLimit             *string `json:"cpu_limit"`
+	Replicas             int64   `json:"replicas"`
+	AppStatus            string  `json:"app_status"`
+	HealthCheckSwarm     *string `json:"health_check_swarm"`
+	RestartPolicySwarm   *string `json:"restart_policy_swarm"`
+	PlacementSwarm       *string `json:"placement_swarm"`
+	UpdateConfigSwarm    *string `json:"update_config_swarm"`
+	RollbackConfigSwarm  *string `json:"rollback_config_swarm"`
+	ModeSwarm            *string `json:"mode_swarm"`
+	LabelsSwarm          *string `json:"labels_swarm"`
+	NetworkSwarm         *string `json:"network_swarm"`
+	EndpointSpecSwarm    *string `json:"endpoint_spec_swarm"`
+	UlimitsSwarm         *string `json:"ulimits_swarm"`
+	StopGracePeriodSwarm *int64  `json:"stop_grace_period_swarm"`
+	EnvironmentID        int64   `json:"environment_id"`
+	ServerID             *int64  `json:"server_id"`
+	CreatedAt            int64   `json:"created_at"`
+	UpdatedAt            int64   `json:"updated_at"`
+}
+
+type Registry struct {
+	ID           int64   `json:"id"`
+	RegistryName string  `json:"registry_name"`
+	ImagePrefix  *string `json:"image_prefix"`
+	Username     string  `json:"username"`
+	Password     string  `json:"password"`
+	RegistryUrl  string  `json:"registry_url"`
+	RegistryType string  `json:"registry_type"`
+	CreatedAt    int64   `json:"created_at"`
+	UpdatedAt    int64   `json:"updated_at"`
+}
+
+type Rollback struct {
+	ID           int64   `json:"id"`
+	DeploymentID int64   `json:"deployment_id"`
+	Version      int64   `json:"version"`
+	Image        *string `json:"image"`
+	FullContext  *string `json:"full_context"`
+	CreatedAt    int64   `json:"created_at"`
+}
+
+type Schedule struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Description    *string `json:"description"`
+	CronExpression string  `json:"cron_expression"`
+	AppName        string  `json:"app_name"`
+	ServiceName    *string `json:"service_name"`
+	ShellType      string  `json:"shell_type"`
+	ScheduleType   string  `json:"schedule_type"`
+	Command        string  `json:"command"`
+	Script         *string `json:"script"`
+	Timezone       *string `json:"timezone"`
+	Enabled        int64   `json:"enabled"`
+	ApplicationID  *int64  `json:"application_id"`
+	ComposeID      *int64  `json:"compose_id"`
+	ServerID       *int64  `json:"server_id"`
+	OrganizationID *int64  `json:"organization_id"`
+	CreatedAt      int64   `json:"created_at"`
+	UpdatedAt      int64   `json:"updated_at"`
+}
+
+type Security struct {
+	ID            int64  `json:"id"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	ApplicationID int64  `json:"application_id"`
+	CreatedAt     int64  `json:"created_at"`
+}
+
+type Server struct {
+	ID                  int64   `json:"id"`
+	Name                string  `json:"name"`
+	Description         *string `json:"description"`
+	IpAddress           string  `json:"ip_address"`
+	Port                int64   `json:"port"`
+	Username            string  `json:"username"`
+	AppName             string  `json:"app_name"`
+	ServerStatus        string  `json:"server_status"`
+	ServerType          string  `json:"server_type"`
+	EnableDockerCleanup int64   `json:"enable_docker_cleanup"`
+	LogCleanupCron      *string `json:"log_cleanup_cron"`
+	Command             string  `json:"command"`
+	MetricsConfig       string  `json:"metrics_config"`
+	SshKeyID            *int64  `json:"ssh_key_id"`
+	CreatedAt           int64   `json:"created_at"`
+	UpdatedAt           int64   `json:"updated_at"`
 }
 
 type ServerMetric struct {
@@ -72,6 +910,40 @@ type ServerMetric struct {
 	TotalDisk        float64 `json:"total_disk"`
 	NetworkIn        float64 `json:"network_in"`
 	NetworkOut       float64 `json:"network_out"`
+}
+
+type Setting struct {
+	ID                  int64   `json:"id"`
+	ServerIp            *string `json:"server_ip"`
+	CertificateType     string  `json:"certificate_type"`
+	CustomCertResolver  *string `json:"custom_cert_resolver"`
+	Https               int64   `json:"https"`
+	Host                *string `json:"host"`
+	LetsEncryptEmail    *string `json:"lets_encrypt_email"`
+	EnableDockerCleanup int64   `json:"enable_docker_cleanup"`
+	LogCleanupCron      *string `json:"log_cleanup_cron"`
+	MetricsConfig       string  `json:"metrics_config"`
+	CreatedAt           int64   `json:"created_at"`
+	UpdatedAt           int64   `json:"updated_at"`
+}
+
+type SshKey struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	PrivateKey  string  `json:"private_key"`
+	PublicKey   string  `json:"public_key"`
+	LastUsedAt  *int64  `json:"last_used_at"`
+	CreatedAt   int64   `json:"created_at"`
+	UpdatedAt   int64   `json:"updated_at"`
+}
+
+type Tag struct {
+	ID             int64  `json:"id"`
+	Name           string `json:"name"`
+	Color          string `json:"color"`
+	OrganizationID int64  `json:"organization_id"`
+	CreatedAt      int64  `json:"created_at"`
 }
 
 type TwoFactor struct {
@@ -96,6 +968,32 @@ type User struct {
 	IsRegistered    int64   `json:"is_registered"`
 	AddedBy         *int64  `json:"added_by"`
 	GroupID         int64   `json:"group_id"`
+	CreatedAt       int64   `json:"created_at"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
+type VolumeBackup struct {
+	ID              int64   `json:"id"`
+	Name            string  `json:"name"`
+	VolumeName      string  `json:"volume_name"`
+	Prefix          string  `json:"prefix"`
+	ServiceType     string  `json:"service_type"`
+	AppName         string  `json:"app_name"`
+	ServiceName     *string `json:"service_name"`
+	TurnOff         int64   `json:"turn_off"`
+	CronExpression  string  `json:"cron_expression"`
+	KeepLatestCount *int64  `json:"keep_latest_count"`
+	Enabled         int64   `json:"enabled"`
+	DestinationID   int64   `json:"destination_id"`
+	OrganizationID  int64   `json:"organization_id"`
+	ApplicationID   *int64  `json:"application_id"`
+	PostgresID      *int64  `json:"postgres_id"`
+	MysqlID         *int64  `json:"mysql_id"`
+	MariadbID       *int64  `json:"mariadb_id"`
+	MongoID         *int64  `json:"mongo_id"`
+	RedisID         *int64  `json:"redis_id"`
+	LibsqlID        *int64  `json:"libsql_id"`
+	ComposeID       *int64  `json:"compose_id"`
 	CreatedAt       int64   `json:"created_at"`
 	UpdatedAt       int64   `json:"updated_at"`
 }
