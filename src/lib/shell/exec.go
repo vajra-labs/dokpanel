@@ -139,11 +139,11 @@ func execSimple(cmd *exec.Cmd, command string) ExecResult {
 func execStream(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return ExecResult{Err: fmt.Errorf("stdout pipe: %w", err)}
+		return ExecResult{Err: fmt.Errorf("Stdout pipe: %w", err)}
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return ExecResult{Err: fmt.Errorf("stderr pipe: %w", err)}
+		return ExecResult{Err: fmt.Errorf("Stderr pipe: %w", err)}
 	}
 
 	var stdout, stderr bytes.Buffer

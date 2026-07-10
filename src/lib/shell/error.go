@@ -49,7 +49,7 @@ func (e *ExecError) DetailedMessage() string {
 
 func newExecError(command, stdout, stderr string, err error) *ExecError {
 	execErr := &ExecError{
-		Message: fmt.Sprintf("command execution failed: %v", err),
+		Message: fmt.Sprintf("Command execution failed: %v", err),
 		Command: command,
 		Stdout:  stdout,
 		Stderr:  stderr,
@@ -63,7 +63,7 @@ func newExecError(command, stdout, stderr string, err error) *ExecError {
 
 func newSSHExecError(command, stdout, stderr string, err error, serverId string) *ExecError {
 	execErr := &ExecError{
-		Message:  fmt.Sprintf("remote command execution failed: %v", err),
+		Message:  fmt.Sprintf("Remote command execution failed: %v", err),
 		Command:  command,
 		Stdout:   stdout,
 		Stderr:   stderr,
