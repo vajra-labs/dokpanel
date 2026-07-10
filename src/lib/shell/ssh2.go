@@ -13,6 +13,7 @@ import (
 
 // Global connection pool
 var pool sync.Map // map[string]*SSHClient
+const timeout = 10 * time.Second
 
 // SSHConfig holds the connection parameters for a remote server.
 type SSHConfig struct {
@@ -50,16 +51,22 @@ func NewSSH(serverId string, cfg SSHConfig) error {
 				ssh.PublicKeys(signer),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			Timeout:         30 * time.Second,
+			Timeout:         timeout,
 		})
 	if err != nil {
 		return newSSHConnError(serverId, err)
 	}
-	pool.Store(serverId, &SSHClient{
+	newClient := &SSHClient{
 		serverId: serverId,
 		cfg:      &cfg,
 		conn:     client,
-	})
+	}
+	if old, loaded := pool.Swap(serverId, newClient); loaded {
+		oldClient := old.(*SSHClient)
+		oldClient.mu.Lock()
+		_ = oldClient.conn.Close()
+		oldClient.mu.Unlock()
+	}
 	return nil
 }
 
@@ -129,19 +136,22 @@ func (c *SSHClient) reconnect() (*ssh.Client, error) {
 				ssh.PublicKeys(signer),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			Timeout:         30 * time.Second,
+			Timeout:         timeout,
 		})
 	if err != nil {
 		return nil, newSSHConnError(c.serverId, err)
 	}
-	// Update pool with fresh connection
-	pool.Store(c.serverId, c)
+	// Close the old (dead) connection before replacing it, so we don't leak
+	// the underlying TCP socket / goroutines. Ignore the error — a stale
+	// connection often fails to close cleanly, and that's expected.
+	if c.conn != nil {
+		_ = c.conn.Close()
+	}
 	return client, nil
 }
 
 // newSession opens a new SSH session, reconnecting once if the connection is stale.
 func (c *SSHClient) newSession() (*ssh.Session, error) {
-	// Multiple goroutines can read conn simultaneously
 	c.mu.RLock()
 	session, err := c.conn.NewSession()
 	c.mu.RUnlock()
@@ -177,6 +187,8 @@ func (c *SSHClient) newSession() (*ssh.Session, error) {
 // Close removes the client from the pool and closes the underlying connection.
 func (c *SSHClient) Close() error {
 	pool.Delete(c.serverId)
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.conn.Close()
 }
 
@@ -195,7 +207,6 @@ func sshExecSimple(session *ssh.Session, serverId, command string) ExecResult {
 	var stdout, stderr bytes.Buffer
 	session.Stdout = &stdout
 	session.Stderr = &stderr
-
 	if err := session.Run(command); err != nil {
 		return ExecResult{Err: newSSHExecError(
 			command, stdout.String(),
