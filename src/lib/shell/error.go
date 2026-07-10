@@ -76,3 +76,36 @@ func newSSHExecError(command, stdout, stderr string, err error, serverId string)
 	}
 	return execErr
 }
+
+func newSSHConnError(serverId string, err error) *ExecError {
+	msg := err.Error()
+	isAuthFailure := strings.Contains(msg, "Unable to authenticate") ||
+		strings.Contains(msg, "No supported methods remain") ||
+		strings.Contains(msg, "SSH: handshake failed")
+	if isAuthFailure {
+		technicalDetail := fmt.Sprintf("Error: %v", err)
+		friendlyMessage := strings.Join([]string{
+			"",
+			"❌ Couldn't connect to your server — the SSH key was not accepted.",
+			"",
+			"This usually means the key doesn't match what's on the server, or the key format is invalid.",
+			"",
+			"Technical details: " + technicalDetail,
+			"",
+			"💡 Hints:",
+			"  • Check that the SSH key you added is the same one installed on the server (e.g. in ~/.ssh/authorized_keys).",
+			"  • Try generating a new SSH key and add only the public key to the server, then try again.",
+			"  • Make sure the correct user and port are configured for the server.",
+		}, "\n")
+		return &ExecError{
+			Message:  "Authentication failed: Invalid SSH private key.\n" + friendlyMessage,
+			ServerID: &serverId,
+			Err:      err,
+		}
+	}
+	return &ExecError{
+		Message:  fmt.Sprintf("SSH connection error: %v", err),
+		ServerID: &serverId,
+		Err:      err,
+	}
+}

@@ -5,15 +5,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 )
 
-// Global connection pool — keyed by serverId.
-var pool sync.Map // map[string]*ssh.Client
+// Global connection pool
+var pool sync.Map // map[string]*SSHClient
 
 // SSHConfig holds the connection parameters for a remote server.
 type SSHConfig struct {
@@ -27,7 +26,9 @@ type SSHConfig struct {
 // Obtain one via GetSSHClient after registering with NewSSH.
 type SSHClient struct {
 	serverId string
+	mu       sync.RWMutex
 	conn     *ssh.Client
+	cfg      *SSHConfig
 }
 
 // NewSSH dials the remote server, establishes an SSH connection, and stores
@@ -37,51 +38,28 @@ func NewSSH(serverId string, cfg SSHConfig) error {
 	signer, err := ssh.ParsePrivateKey([]byte(cfg.PrivateKey))
 	if err != nil {
 		return &ExecError{
-			Message: fmt.Sprintf("invalid SSH private key: %v", err),
+			Message: fmt.Sprintf("Invalid SSH private key: %v", err),
 			Err:     err,
 		}
 	}
-	client, err := ssh.Dial("tcp", cfg.Host+":"+cfg.Port, &ssh.ClientConfig{
-		User: cfg.User,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         10 * time.Second,
-	})
+	client, err := ssh.Dial(
+		"tcp",
+		cfg.Host+":"+cfg.Port, &ssh.ClientConfig{
+			User: cfg.User,
+			Auth: []ssh.AuthMethod{
+				ssh.PublicKeys(signer),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
 	if err != nil {
-		msg := err.Error()
-		isAuthFailure := strings.Contains(msg, "unable to authenticate") ||
-			strings.Contains(msg, "no supported methods remain") ||
-			strings.Contains(msg, "ssh: handshake failed")
-		if isAuthFailure {
-			technicalDetail := fmt.Sprintf("Error: %v", err)
-			friendlyMessage := strings.Join([]string{
-				"",
-				"❌ Couldn't connect to your server — the SSH key was not accepted.",
-				"",
-				"This usually means the key doesn't match what's on the server, or the key format is invalid.",
-				"",
-				"Technical details: " + technicalDetail,
-				"",
-				"💡 Hints:",
-				"  • Check that the SSH key you added is the same one installed on the server (e.g. in ~/.ssh/authorized_keys).",
-				"  • Try generating a new SSH key and add only the public key to the server, then try again.",
-				"  • Make sure the correct user and port are configured for the server.",
-			}, "\n")
-			return &ExecError{
-				Message:  "Authentication failed: Invalid SSH private key.\n" + friendlyMessage,
-				ServerID: &serverId,
-				Err:      err,
-			}
-		}
-		return &ExecError{
-			Message:  fmt.Sprintf("SSH connection error: %v", err),
-			ServerID: &serverId,
-			Err:      err,
-		}
+		return newSSHConnError(serverId, err)
 	}
-	pool.Store(serverId, client)
+	pool.Store(serverId, &SSHClient{
+		serverId: serverId,
+		cfg:      &cfg,
+		conn:     client,
+	})
 	return nil
 }
 
@@ -90,12 +68,11 @@ func NewSSH(serverId string, cfg SSHConfig) error {
 func GetSSHClient(serverId string) (*SSHClient, error) {
 	val, ok := pool.Load(serverId)
 	if !ok {
-		return nil, fmt.Errorf("server %q not connected", serverId)
+		return nil, &ExecError{
+			Message: fmt.Sprintf("Server %q not connected", serverId),
+		}
 	}
-	return &SSHClient{
-		serverId: serverId,
-		conn:     val.(*ssh.Client),
-	}, nil
+	return val.(*SSHClient), nil
 }
 
 // Exec runs a command on the remote server and returns a channel that receives
@@ -109,9 +86,9 @@ func (c *SSHClient) Exec(ctx context.Context, command string, onData func(string
 	go func() {
 		defer close(ch)
 
-		session, err := c.conn.NewSession()
+		session, err := c.newSession()
 		if err != nil {
-			ch <- ExecResult{Err: fmt.Errorf("ssh new session: %w", err)}
+			ch <- ExecResult{Err: err}
 			return
 		}
 		defer session.Close()
@@ -135,6 +112,68 @@ func (c *SSHClient) Exec(ctx context.Context, command string, onData func(string
 	return ch
 }
 
+// reconnect dials a fresh SSH connection using the stored config.
+func (c *SSHClient) reconnect() (*ssh.Client, error) {
+	signer, err := ssh.ParsePrivateKey([]byte(c.cfg.PrivateKey))
+	if err != nil {
+		return nil, &ExecError{
+			Message: fmt.Sprintf("Parse private key: %v", err),
+			Err:     err,
+		}
+	}
+	client, err := ssh.Dial(
+		"tcp",
+		c.cfg.Host+":"+c.cfg.Port, &ssh.ClientConfig{
+			User: c.cfg.User,
+			Auth: []ssh.AuthMethod{
+				ssh.PublicKeys(signer),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
+	if err != nil {
+		return nil, newSSHConnError(c.serverId, err)
+	}
+	// Update pool with fresh connection
+	pool.Store(c.serverId, c)
+	return client, nil
+}
+
+// newSession opens a new SSH session, reconnecting once if the connection is stale.
+func (c *SSHClient) newSession() (*ssh.Session, error) {
+	// Multiple goroutines can read conn simultaneously
+	c.mu.RLock()
+	session, err := c.conn.NewSession()
+	c.mu.RUnlock()
+	if err == nil {
+		return session, nil
+	}
+	// Full lock for reconnect
+	// Only one goroutine writes conn
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	// Double-check
+	// Another goroutine may have already reconnected
+	session, err = c.conn.NewSession()
+	if err == nil {
+		return session, nil
+	}
+	// Attempt reconnect
+	newConn, err := c.reconnect()
+	if err != nil {
+		return nil, err
+	}
+	c.conn = newConn
+	session, err = c.conn.NewSession()
+	if err != nil {
+		return nil, &ExecError{
+			Message: fmt.Sprintf("SSH new session: %v", err),
+			Err:     err,
+		}
+	}
+	return session, nil
+}
+
 // Close removes the client from the pool and closes the underlying connection.
 func (c *SSHClient) Close() error {
 	pool.Delete(c.serverId)
@@ -144,7 +183,7 @@ func (c *SSHClient) Close() error {
 // SSHCloseAll closes every connection in the pool.
 func SSHCloseAll() {
 	pool.Range(func(key, val any) bool {
-		_ = val.(*ssh.Client).Close()
+		_ = val.(*SSHClient).conn.Close()
 		pool.Delete(key)
 		return true
 	})
