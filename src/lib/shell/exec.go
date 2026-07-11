@@ -97,10 +97,12 @@ type ExecResult struct {
 // To stream output in real-time, specify a callback using WithOnData.
 func Exec(ctx context.Context, command string, options ...ExecOption) <-chan ExecResult {
 	ch := make(chan ExecResult, 1)
+
 	opts := &ExecOptions{}
 	for _, option := range options {
 		option(opts)
 	}
+
 	go func() {
 		defer close(ch)
 		cmd := buildCmd(ctx, command, opts)
@@ -110,6 +112,7 @@ func Exec(ctx context.Context, command string, options ...ExecOption) <-chan Exe
 			ch <- execSimple(cmd, command)
 		}
 	}()
+
 	return ch
 }
 

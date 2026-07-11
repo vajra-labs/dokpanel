@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"dokpanel/src/conf"
@@ -11,7 +12,26 @@ import (
 	"go.uber.org/fx"
 )
 
-// newClient finds a reachable Docker socket and returns a client.
+func provideClient(lc fx.Lifecycle, cfg *conf.Config) *client.Client {
+	c := newClient(cfg)
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if _, err := c.Ping(ctx, client.PingOptions{}); err != nil {
+				return err
+			}
+			log.Info().Str("host", cfg.DOCKER_HOST).Msg("Docker connected")
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			return c.Close()
+		},
+	})
+
+	return c
+}
+
+// Finds a reachable Docker socket and returns a client.
 func newClient(cfg *conf.Config) *client.Client {
 	for _, socketPath := range getCandidates(cfg) {
 		fsPath := socketPath
@@ -37,21 +57,22 @@ func newClient(cfg *conf.Config) *client.Client {
 	return nil
 }
 
-func provideClient(lc fx.Lifecycle, cfg *conf.Config) *client.Client {
-	c := newClient(cfg)
+func getCandidates(cfg *conf.Config) []string {
+	var candidates []string
 
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			if _, err := c.Ping(ctx, client.PingOptions{}); err != nil {
-				return err
-			}
-			log.Info().Str("host", cfg.DOCKER_HOST).Msg("Docker connected")
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			return c.Close()
-		},
-	})
+	// Priority 1: from config (e.g. "unix:///var/run/docker.sock")
+	if cfg.DOCKER_HOST != "" {
+		candidates = append(candidates, cfg.DOCKER_HOST)
+	}
+	// Priority 2 & 3: Rancher Desktop + Colima — both need home dir
+	if home, err := os.UserHomeDir(); err == nil {
+		candidates = append(candidates,
+			fmt.Sprintf("unix://%s/.rd/docker.sock", home),             // Rancher Desktop
+			fmt.Sprintf("unix://%s/.colima/default/docker.sock", home), // Colima
+		)
+	}
+	// Priority 4: Standard Docker socket (fallback)
+	candidates = append(candidates, "unix:///var/run/docker.sock")
 
-	return c
+	return candidates
 }

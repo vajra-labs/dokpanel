@@ -3,19 +3,23 @@ package shell
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/sync/semaphore"
 )
 
-// Global connection pool
 var pool sync.Map // map[string]*SSHClient
-const timeout = 10 * time.Second
 
-// SSHConfig holds the connection parameters for a remote server.
+const (
+	timeout     = 10 * time.Second
+	maxSessions = 5 // keep below OpenSSH MaxSessions
+)
+
 type SSHConfig struct {
 	Host       string
 	Port       string
@@ -23,45 +27,43 @@ type SSHConfig struct {
 	PrivateKey string
 }
 
-// SSHClient is a lightweight handle for a registered server.
-// Obtain one via GetSSHClient after registering with NewSSH.
 type SSHClient struct {
 	serverId string
-	mu       sync.RWMutex
+	cfg      SSHConfig
+	mu       sync.RWMutex // guards conn field
 	conn     *ssh.Client
-	cfg      *SSHConfig
+	sem      *semaphore.Weighted // limits concurrent sessions to maxSessions
 }
 
-// NewSSH dials the remote server, establishes an SSH connection, and stores
-// it in the global pool under serverId. Calling NewSSH again with the same
-// serverId replaces the existing connection.
-func NewSSH(serverId string, cfg SSHConfig) error {
+// dial opens an authenticated SSH connection to the server described by cfg.
+func dial(cfg SSHConfig) (*ssh.Client, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(cfg.PrivateKey))
 	if err != nil {
-		return &ExecError{
-			Message: fmt.Sprintf("Invalid SSH private key: %v", err),
-			Err:     err,
-		}
+		return nil, err
 	}
-	client, err := ssh.Dial(
-		"tcp",
-		cfg.Host+":"+cfg.Port, &ssh.ClientConfig{
-			User: cfg.User,
-			Auth: []ssh.AuthMethod{
-				ssh.PublicKeys(signer),
-			},
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			Timeout:         timeout,
-		})
+	return ssh.Dial("tcp", cfg.Host+":"+cfg.Port, &ssh.ClientConfig{
+		User:            cfg.User,
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         timeout,
+	})
+}
+
+// SetSSHClient connects to the server and registers it in the pool under serverId.
+// Calling again with the same serverId replaces the existing connection.
+func SetSSHClient(serverId string, cfg SSHConfig) error {
+	client, err := dial(cfg)
 	if err != nil {
 		return newSSHConnError(serverId, err)
 	}
 	newClient := &SSHClient{
 		serverId: serverId,
-		cfg:      &cfg,
+		cfg:      cfg,
 		conn:     client,
+		sem:      semaphore.NewWeighted(maxSessions),
 	}
 	if old, loaded := pool.Swap(serverId, newClient); loaded {
+		// close the previous connection for this serverId
 		oldClient := old.(*SSHClient)
 		oldClient.mu.Lock()
 		_ = oldClient.conn.Close()
@@ -70,46 +72,96 @@ func NewSSH(serverId string, cfg SSHConfig) error {
 	return nil
 }
 
-// GetSSHClient retrieves a registered SSHClient handle from the pool.
-// Returns an error if NewSSH has not been called for this serverId.
+// GetSSHClient retrieves a registered SSHClient from the pool.
 func GetSSHClient(serverId string) (*SSHClient, error) {
 	val, ok := pool.Load(serverId)
 	if !ok {
-		return nil, &ExecError{
-			Message: fmt.Sprintf("Server %q not connected", serverId),
-		}
+		return nil, &ExecError{Message: fmt.Sprintf("server %q not found in ssh pool", serverId)}
 	}
 	return val.(*SSHClient), nil
 }
 
+// DelSSHClient removes a server from the pool and closes its connection.
+func DelSSHClient(serverId string) error {
+	val, ok := pool.Load(serverId)
+	if !ok {
+		return &ExecError{Message: fmt.Sprintf("server %q not found in ssh pool", serverId)}
+	}
+	client := val.(*SSHClient)
+	pool.Delete(client.serverId)
+	client.mu.Lock()
+	defer client.mu.Unlock()
+	return client.conn.Close()
+}
+
+// DelAllSSHClient closes every connection in the pool.
+func DelAllSSHClient() {
+	pool.Range(func(key, val any) bool {
+		client := val.(*SSHClient)
+		client.mu.Lock()
+		_ = client.conn.Close()
+		client.mu.Unlock()
+		pool.Delete(key)
+		return true
+	})
+}
+
 // Exec runs a command on the remote server and returns a channel that receives
-// the result once execution completes.
-//
-// Each call opens a new SSH session on the existing TCP connection — lightweight
-// and safe to call concurrently. If onData is set, output chunks are forwarded
-// in real-time. The context is honoured — cancelling it closes the session.
+// the result once execution completes. Blocks if maxSessions slots are in use.
 func (c *SSHClient) Exec(ctx context.Context, command string, onData func(string)) <-chan ExecResult {
 	ch := make(chan ExecResult, 1)
 	go func() {
 		defer close(ch)
-
-		session, err := c.newSession()
-		if err != nil {
-			ch <- ExecResult{Err: err}
+		// block until a session slot is free; respect ctx cancellation
+		if err := c.sem.Acquire(ctx, 1); err != nil {
+			ch <- ExecResult{Err: &ExecError{
+				Message:  fmt.Sprintf("session limit reached: %v", err),
+				Command:  command,
+				ServerID: &c.serverId,
+				Err:      err,
+			}}
 			return
 		}
+		defer c.sem.Release(1)
+		// snapshot conn under RLock before opening a session
+		c.mu.RLock()
+		deadConn := c.conn
+		session, err := c.conn.NewSession()
+		c.mu.RUnlock()
+		if err != nil {
+			// OpenChannelError = server explicitly rejected (e.g. MaxSessions hit)
+			// reconnecting won't help in this case
+			if oe, ok := errors.AsType[*ssh.OpenChannelError](err); ok {
+				ch <- ExecResult{Err: oe}
+				return
+			}
+			// connection is stale, reconnect once and retry
+			c.mu.Lock()
+			reconnErr := c.reconnect(deadConn)
+			if reconnErr != nil {
+				c.mu.Unlock()
+				ch <- ExecResult{Err: reconnErr}
+				return
+			}
+			session, err = c.conn.NewSession()
+			c.mu.Unlock()
+			if err != nil {
+				ch <- ExecResult{Err: newSSHExecError(command, "", "", err, c.serverId)}
+				return
+			}
+		}
 		defer session.Close()
-
+		// signal SIGKILL to the remote process if ctx is cancelled
 		done := make(chan struct{})
 		defer close(done)
 		go func() {
 			select {
 			case <-ctx.Done():
+				_ = session.Signal(ssh.SIGKILL)
 				session.Close()
 			case <-done:
 			}
 		}()
-
 		if onData != nil {
 			ch <- sshExecStream(session, c.serverId, command, onData)
 		} else {
@@ -119,108 +171,34 @@ func (c *SSHClient) Exec(ctx context.Context, command string, onData func(string
 	return ch
 }
 
-// reconnect dials a fresh SSH connection using the stored config.
-func (c *SSHClient) reconnect() (*ssh.Client, error) {
-	signer, err := ssh.ParsePrivateKey([]byte(c.cfg.PrivateKey))
+// reconnect replaces a stale connection with a fresh one.
+// Skips silently if another goroutine already reconnected (c.conn != deadConn).
+// Caller must hold c.mu.Lock().
+func (c *SSHClient) reconnect(deadConn *ssh.Client) error {
+	if c.conn != deadConn {
+		return nil
+	}
+	newConn, err := dial(c.cfg)
 	if err != nil {
-		return nil, &ExecError{
-			Message: fmt.Sprintf("Parse private key: %v", err),
-			Err:     err,
-		}
+		return newSSHConnError(c.serverId, err)
 	}
-	client, err := ssh.Dial(
-		"tcp",
-		c.cfg.Host+":"+c.cfg.Port, &ssh.ClientConfig{
-			User: c.cfg.User,
-			Auth: []ssh.AuthMethod{
-				ssh.PublicKeys(signer),
-			},
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			Timeout:         timeout,
-		})
-	if err != nil {
-		return nil, newSSHConnError(c.serverId, err)
-	}
-	// Close the old (dead) connection before replacing it, so we don't leak
-	// the underlying TCP socket / goroutines. Ignore the error — a stale
-	// connection often fails to close cleanly, and that's expected.
-	if c.conn != nil {
-		_ = c.conn.Close()
-	}
-	return client, nil
-}
-
-// newSession opens a new SSH session, reconnecting once if the connection is stale.
-func (c *SSHClient) newSession() (*ssh.Session, error) {
-	c.mu.RLock()
-	session, err := c.conn.NewSession()
-	c.mu.RUnlock()
-	if err == nil {
-		return session, nil
-	}
-	// Full lock for reconnect
-	// Only one goroutine writes conn
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	// Double-check
-	// Another goroutine may have already reconnected
-	session, err = c.conn.NewSession()
-	if err == nil {
-		return session, nil
-	}
-	// Attempt reconnect
-	newConn, err := c.reconnect()
-	if err != nil {
-		return nil, err
-	}
+	_ = c.conn.Close() // best effort — may already be dead
 	c.conn = newConn
-	session, err = c.conn.NewSession()
-	if err != nil {
-		return nil, &ExecError{
-			Message: fmt.Sprintf("SSH new session: %v", err),
-			Err:     err,
-		}
-	}
-	return session, nil
-}
-
-// Close removes the client from the pool and closes the underlying connection.
-func (c *SSHClient) Close() error {
-	pool.Delete(c.serverId)
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.conn.Close()
-}
-
-// SSHCloseAll closes every connection in the pool.
-func SSHCloseAll() {
-	pool.Range(func(key, val any) bool {
-		_ = val.(*SSHClient).conn.Close()
-		pool.Delete(key)
-		return true
-	})
+	return nil
 }
 
 // sshExecSimple runs the command and captures stdout/stderr into buffers.
-// Used when no streaming callback is provided.
 func sshExecSimple(session *ssh.Session, serverId, command string) ExecResult {
 	var stdout, stderr bytes.Buffer
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 	if err := session.Run(command); err != nil {
-		return ExecResult{Err: newSSHExecError(
-			command, stdout.String(),
-			stderr.String(), err,
-			serverId,
-		)}
+		return ExecResult{Err: newSSHExecError(command, stdout.String(), stderr.String(), err, serverId)}
 	}
-	return ExecResult{
-		Stdout: stdout.String(),
-		Stderr: stderr.String(),
-	}
+	return ExecResult{Stdout: stdout.String(), Stderr: stderr.String()}
 }
 
-// sshExecStream runs the command and forwards output to onData if set.
+// sshExecStream runs the command and forwards output chunks to onData in real-time.
 func sshExecStream(session *ssh.Session, serverId, command string, onData func(string)) ExecResult {
 	stdoutPipe, err := session.StdoutPipe()
 	if err != nil {
@@ -236,10 +214,7 @@ func sshExecStream(session *ssh.Session, serverId, command string, onData func(s
 	stderrWriter := &streamWriter{buf: &stderr, onData: onData}
 
 	if err := session.Start(command); err != nil {
-		return ExecResult{Err: newSSHExecError(
-			command, "", "",
-			err, serverId,
-		)}
+		return ExecResult{Err: newSSHExecError(command, "", "", err, serverId)}
 	}
 
 	var wg sync.WaitGroup
@@ -251,14 +226,7 @@ func sshExecStream(session *ssh.Session, serverId, command string, onData func(s
 	wg.Wait()
 
 	if err != nil {
-		return ExecResult{Err: newSSHExecError(
-			command, stdout.String(),
-			stderr.String(), err,
-			serverId,
-		)}
+		return ExecResult{Err: newSSHExecError(command, stdout.String(), stderr.String(), err, serverId)}
 	}
-	return ExecResult{
-		Stdout: stdout.String(),
-		Stderr: stderr.String(),
-	}
+	return ExecResult{Stdout: stdout.String(), Stderr: stderr.String()}
 }
