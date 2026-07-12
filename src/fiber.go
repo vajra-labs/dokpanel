@@ -15,10 +15,11 @@ import (
 
 func Fiber(cfg *conf.Config) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:      cfg.NAME,
-		BodyLimit:    cfg.BODY_LIMIT,
-		ErrorHandler: middle.ErrorHandler(cfg),
-		IdleTimeout:  5 * time.Second,
+		AppName:         cfg.NAME,
+		BodyLimit:       cfg.BODY_LIMIT,
+		ErrorHandler:    middle.ErrorHandler(cfg),
+		IdleTimeout:     5 * time.Second,
+		StructValidator: middle.NewStructValidator(),
 	})
 
 	// Stack trace only in dev

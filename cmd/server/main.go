@@ -13,7 +13,9 @@ import (
 	"dokpanel/src/conf"
 	"dokpanel/src/db"
 	"dokpanel/src/docs"
+	"dokpanel/src/lib"
 	"dokpanel/src/logger"
+	"dokpanel/src/service"
 	"dokpanel/web"
 
 	"github.com/gofiber/fiber/v3"
@@ -62,6 +64,8 @@ func main() {
 		db.Module,
 		apis.Module,
 		docs.Module,
+		lib.Module,
+		service.Module,
 		fx.Provide(src.Fiber),
 		fx.Invoke(web.ServeSPA),
 		fx.Invoke(StartServer),

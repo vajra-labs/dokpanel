@@ -9,6 +9,82 @@ import (
 	"context"
 )
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (email, first_name, last_name, avatar, role, password, is_registered, group_id)
+VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+RETURNING id, email, last_name, first_name, avatar, role, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, group_id, created_at, updated_at
+`
+
+type CreateUserParams struct {
+	Email     *string `json:"email"`
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Avatar    string  `json:"avatar"`
+	Role      *string `json:"role"`
+	Password  string  `json:"password"`
+	GroupID   int64   `json:"group_id"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.FirstName,
+		arg.LastName,
+		arg.Avatar,
+		arg.Role,
+		arg.Password,
+		arg.GroupID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.LastName,
+		&i.FirstName,
+		&i.Avatar,
+		&i.Role,
+		&i.AboutMe,
+		&i.Password,
+		&i.IsEmailVerify,
+		&i.EmailVerifyAt,
+		&i.TwoFactorEnable,
+		&i.IsRegistered,
+		&i.AddedBy,
+		&i.GroupID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, last_name, first_name, avatar, role, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, group_id, created_at, updated_at FROM users WHERE email = ? LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email *string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.LastName,
+		&i.FirstName,
+		&i.Avatar,
+		&i.Role,
+		&i.AboutMe,
+		&i.Password,
+		&i.IsEmailVerify,
+		&i.EmailVerifyAt,
+		&i.TwoFactorEnable,
+		&i.IsRegistered,
+		&i.AddedBy,
+		&i.GroupID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, email, last_name, first_name, avatar, role, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, group_id, created_at, updated_at FROM users WHERE id = ?
 `
@@ -35,4 +111,15 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const isOwnerPresent = `-- name: IsOwnerPresent :one
+SELECT COUNT(*) FROM users WHERE role = 'OWNER' LIMIT 1
+`
+
+func (q *Queries) IsOwnerPresent(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, isOwnerPresent)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }

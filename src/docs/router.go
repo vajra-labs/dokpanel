@@ -17,7 +17,7 @@ type Handler struct {
 }
 
 func Router(app fiber.Router, h *Handler) {
-	app.Get("/api/docs", h.docs)
+	app.Get("/docs", h.docs)
 }
 
 func newHandler(api huma.API, cfg *conf.Config) *Handler {

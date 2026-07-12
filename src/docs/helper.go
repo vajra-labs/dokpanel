@@ -82,3 +82,47 @@ func SchemaFor(api huma.API, v any) *huma.Schema {
 		reflect.TypeOf(v), true, "",
 	)
 }
+
+// Body creates a request body schema.
+// Usage:
+//
+//	RequestBody: docs.Body(api, RegisterDto{}, true, "description")
+func Body(api huma.API, v any, required bool, description string) *huma.RequestBody {
+	return &huma.RequestBody{
+		Required:    required,
+		Description: description,
+		Content: map[string]*huma.MediaType{
+			"application/json": {
+				Schema: SchemaFor(api, v),
+			},
+		},
+	}
+}
+
+// QueryParam creates a query parameter definition.
+// Usage:
+//
+//	Parameters: []*huma.Param{ docs.QueryParam("page", "Page number", false) }
+func QueryParam(name, description string, required bool) *huma.Param {
+	return &huma.Param{
+		Name:        name,
+		In:          "query",
+		Description: description,
+		Required:    required,
+		Schema:      &huma.Schema{Type: "string"},
+	}
+}
+
+// PathParam creates a path parameter definition.
+// Usage:
+//
+//	Parameters: []*huma.Param{ docs.PathParam("id", "Resource ID") }
+func PathParam(name, description string) *huma.Param {
+	return &huma.Param{
+		Name:        name,
+		In:          "path",
+		Description: description,
+		Required:    true,
+		Schema:      &huma.Schema{Type: "string"},
+	}
+}

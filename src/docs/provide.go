@@ -16,6 +16,10 @@ var tags = []*huma.Tag{
 		Name:        "System",
 		Description: "Endpoints related to system operations and health checks",
 	},
+	{
+		Name:        "Authentication",
+		Description: "Endpoints for user authentication and session management",
+	},
 }
 
 // provideOpenAPI creates and returns a huma.API with all routes registered.
