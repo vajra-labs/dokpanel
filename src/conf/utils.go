@@ -54,11 +54,3 @@ func getEnvTime(key string, fallback ...string) time.Duration {
 	}
 	return d
 }
-
-func getEnvBool(key string, fallback bool) bool {
-	val := getEnv(key)
-	if val == "" {
-		return fallback
-	}
-	return val == "true" || val == "1"
-}

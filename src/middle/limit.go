@@ -10,16 +10,16 @@ import (
 )
 
 type RateOption struct {
-	Limit    int
-	WindowMs time.Duration
-	Message  string
-	Code     string
+	Limit   int
+	Window  time.Duration
+	Message string
+	Code    string
 }
 
 func RateLimit(opts RateOption) fiber.Handler {
 	return limiter.New(limiter.Config{
 		Max:        opts.Limit,
-		Expiration: opts.WindowMs,
+		Expiration: opts.Window,
 		KeyGenerator: func(c fiber.Ctx) string {
 			ip := c.IP()
 			if ip == "" {
@@ -41,7 +41,7 @@ func RateLimit(opts RateOption) fiber.Handler {
 				code,
 				msg,
 				errx.WithMeta("limitReq", opts.Limit),
-				errx.WithMeta("windowMs", opts.WindowMs.String()),
+				errx.WithMeta("windowMs", opts.Window.String()),
 			)
 		},
 	})

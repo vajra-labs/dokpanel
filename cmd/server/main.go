@@ -12,6 +12,7 @@ import (
 	"dokpanel/src/apis"
 	"dokpanel/src/conf"
 	"dokpanel/src/db"
+	"dokpanel/src/docs"
 	"dokpanel/src/logger"
 	"dokpanel/web"
 
@@ -60,6 +61,7 @@ func main() {
 		logger.Module,
 		db.Module,
 		apis.Module,
+		docs.Module,
 		fx.Provide(src.Fiber),
 		fx.Invoke(web.ServeSPA),
 		fx.Invoke(StartServer),

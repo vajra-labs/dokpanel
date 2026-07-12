@@ -142,11 +142,11 @@ func execSimple(cmd *exec.Cmd, command string) ExecResult {
 func execStream(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return ExecResult{Err: fmt.Errorf("Stdout pipe: %w", err)}
+		return ExecResult{Err: fmt.Errorf("stdout pipe: %w", err)}
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return ExecResult{Err: fmt.Errorf("Stderr pipe: %w", err)}
+		return ExecResult{Err: fmt.Errorf("stderr pipe: %w", err)}
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -160,8 +160,8 @@ func execStream(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { defer wg.Done(); io.Copy(stdoutWriter, stdoutPipe) }()
-	go func() { defer wg.Done(); io.Copy(stderrWriter, stderrPipe) }()
+	go func() { defer wg.Done(); _, _ = io.Copy(stdoutWriter, stdoutPipe) }()
+	go func() { defer wg.Done(); _, _ = io.Copy(stderrWriter, stderrPipe) }()
 
 	err = cmd.Wait()
 	wg.Wait()

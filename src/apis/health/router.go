@@ -11,6 +11,8 @@ func Router(app fiber.Router, handler *Handler) {
 	app.Get("/health", handler.Health)
 }
 
-var Module = fx.Module("health",
+var Module = fx.Module(
+	"health",
 	fx.Provide(NewHandler),
+	fx.Invoke(registerOpenApi),
 )

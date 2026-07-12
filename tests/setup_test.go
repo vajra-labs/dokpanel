@@ -9,6 +9,7 @@ import (
 	"dokpanel/src/apis"
 	"dokpanel/src/conf"
 	"dokpanel/src/db"
+	"dokpanel/src/docs"
 	"dokpanel/src/logger"
 
 	"github.com/gofiber/fiber/v3"
@@ -25,6 +26,7 @@ func TestMain(m *testing.M) {
 		conf.Module,
 		logger.Module,
 		db.Module,
+		docs.Module,
 		apis.Module,
 		fx.Provide(src.Fiber),
 		fx.Populate(&fiberApp),

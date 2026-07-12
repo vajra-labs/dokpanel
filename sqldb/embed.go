@@ -2,8 +2,9 @@ package sqldb
 
 import (
 	"database/sql"
-	"dokpanel/src/conf"
 	"embed"
+
+	"dokpanel/src/conf"
 
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog/log"

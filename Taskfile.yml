@@ -78,9 +78,21 @@ tasks:
       - gotestsum --format testname ./tests/...
       - rm -rf tmp
 
+  code:lint:
+    desc: Lint Go source code with golangci-lint
+    preconditions:
+      - sh: command -v golangci-lint
+        msg: "golangci-lint not found. Install with: brew install golangci-lint"
+    cmd: golangci-lint run ./...
+
   code:format:
-    desc: Format all Go source code
-    cmd: go fmt ./...
+    desc: Format all Go source code with gofumpt (stricter gofmt)
+    preconditions:
+      - sh: command -v gofumpt
+        msg: "gofumpt not found. Install with: go install mvdan.cc/gofumpt@latest"
+    cmds:
+      - go fmt ./...
+      - gofumpt -l -w .
 
   # Dependencies
   mod:deps:

@@ -150,15 +150,15 @@ func (c *SSHClient) Exec(ctx context.Context, command string, onData func(string
 				return
 			}
 		}
-		defer session.Close()
-		// signal SIGKILL to the remote process if ctx is cancelled
+		defer func() { _ = session.Close() }()
+		// signal SIGKILL to the remote process if ctx is canceled
 		done := make(chan struct{})
 		defer close(done)
 		go func() {
 			select {
 			case <-ctx.Done():
 				_ = session.Signal(ssh.SIGKILL)
-				session.Close()
+				_ = session.Close()
 			case <-done:
 			}
 		}()
@@ -219,8 +219,8 @@ func sshExecStream(session *ssh.Session, serverId, command string, onData func(s
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { defer wg.Done(); io.Copy(stdoutWriter, stdoutPipe) }()
-	go func() { defer wg.Done(); io.Copy(stderrWriter, stderrPipe) }()
+	go func() { defer wg.Done(); _, _ = io.Copy(stdoutWriter, stdoutPipe) }()
+	go func() { defer wg.Done(); _, _ = io.Copy(stderrWriter, stderrPipe) }()
 
 	err = session.Wait()
 	wg.Wait()

@@ -5,7 +5,9 @@ Dokpanel is a self-hosted, developer-friendly panel designed to deploy, monitor,
 ---
 
 ### 1 groups Table
+
 Stores user permission groups for access control.
+
 ```sql
 CREATE TABLE groups (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,7 +19,9 @@ CREATE TABLE groups (
 ```
 
 ### 2 policy Table
+
 Defines system access permission policy rules.
+
 ```sql
 CREATE TABLE policy (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,7 +32,9 @@ CREATE TABLE policy (
 ```
 
 ### 3 group_policy Table
+
 Links policy rules to permission groups (many-to-many relationship).
+
 ```sql
 CREATE TABLE group_policy (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +45,9 @@ CREATE TABLE group_policy (
 ```
 
 ### 4 users Table
+
 Stores account metadata, password credentials, role permissions, and group associations.
+
 ```sql
 CREATE TABLE users (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +72,9 @@ CREATE TABLE users (
 ```
 
 ### 5 two_factor Table
+
 Stores TOTP secret keys and backup recovery codes for user account multi-factor authentication.
+
 ```sql
 CREATE TABLE two_factor (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +85,9 @@ CREATE TABLE two_factor (
 ```
 
 ### 6 jwt_tokens Table
+
 Tracks active JWT tokens for user session blacklists and expirations.
+
 ```sql
 CREATE TABLE jwt_tokens (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,7 +105,9 @@ CREATE TABLE jwt_tokens (
 ```
 
 ### 7 organization Table
+
 Stores tenant organizations hosting resources.
+
 ```sql
 CREATE TABLE organization (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,7 +121,9 @@ CREATE TABLE organization (
 ```
 
 ### 8 organization_members Table
+
 Links users to organizations with specific memberships (many-to-many relationship).
+
 ```sql
 CREATE TABLE organization_members (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,7 +137,9 @@ CREATE TABLE organization_members (
 ```
 
 ### 9 organization_invites Table
+
 Stores pending/accepted invites sent to new organization members.
+
 ```sql
 CREATE TABLE organization_invites (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,7 +158,9 @@ CREATE TABLE organization_invites (
 ```
 
 ### 10 projects Table
+
 Stores target projects encapsulating environments and services.
+
 ```sql
 CREATE TABLE projects (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,7 +175,9 @@ CREATE TABLE projects (
 ```
 
 ### 11 tags Table
+
 Stores project label tags.
+
 ```sql
 CREATE TABLE tags (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -168,7 +190,9 @@ CREATE TABLE tags (
 ```
 
 ### 12 project_tags Table
+
 Maps tags to projects (many-to-many relationship).
+
 ```sql
 CREATE TABLE project_tags (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,7 +203,9 @@ CREATE TABLE project_tags (
 ```
 
 ### 13 postgres_dbs Table
+
 Defines managed PostgreSQL database services, resources, and replica settings.
+
 ```sql
 CREATE TABLE postgres_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -221,7 +247,9 @@ CREATE TABLE postgres_dbs (
 ```
 
 ### 14 mysql_dbs Table
+
 Defines managed MySQL database services, including root password credentials.
+
 ```sql
 CREATE TABLE mysql_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -263,7 +291,9 @@ CREATE TABLE mysql_dbs (
 ```
 
 ### 15 mariadb_dbs Table
+
 Defines managed MariaDB database services.
+
 ```sql
 CREATE TABLE mariadb_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -305,7 +335,9 @@ CREATE TABLE mariadb_dbs (
 ```
 
 ### 16 mongo_dbs Table
+
 Defines managed MongoDB database services, including replica sets.
+
 ```sql
 CREATE TABLE mongo_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -346,7 +378,9 @@ CREATE TABLE mongo_dbs (
 ```
 
 ### 17 redis_dbs Table
+
 Defines managed Redis database cache services.
+
 ```sql
 CREATE TABLE redis_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -385,7 +419,9 @@ CREATE TABLE redis_dbs (
 ```
 
 ### 18 libsql_dbs Table
+
 Defines managed LibSQL (Turso core engine) instances, supporting replica nodes.
+
 ```sql
 CREATE TABLE libsql_dbs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -432,7 +468,9 @@ CREATE TABLE libsql_dbs (
 ```
 
 ### 19 server_metrics Table
+
 Stores time-series CPU, RAM, and Disk metric performance data for the host machine.
+
 ```sql
 CREATE TABLE server_metrics (
 	timestamp INTEGER PRIMARY KEY,
@@ -457,7 +495,9 @@ CREATE TABLE server_metrics (
 ```
 
 ### 20 container_metrics Table
+
 Stores time-series Docker stats for individual application and database containers.
+
 ```sql
 CREATE TABLE container_metrics (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -469,7 +509,9 @@ CREATE TABLE container_metrics (
 ```
 
 ### 21 ssh_keys Table
+
 Stores securely encrypted SSH Private Keys used to provision remote build/deploy servers.
+
 ```sql
 CREATE TABLE ssh_keys (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -484,7 +526,9 @@ CREATE TABLE ssh_keys (
 ```
 
 ### 22 registries Table
+
 Configures container registry access credentials (e.g. Docker Hub, GHCR).
+
 ```sql
 CREATE TABLE registries (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -502,7 +546,9 @@ CREATE TABLE registries (
 ```
 
 ### 23 environments Table
+
 Stores project sub-environments (e.g. 'production', 'staging').
+
 ```sql
 CREATE TABLE environments (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -517,7 +563,9 @@ CREATE TABLE environments (
 ```
 
 ### 24 servers Table
+
 Stores configurations for remote Docker servers.
+
 ```sql
 CREATE TABLE servers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -545,7 +593,9 @@ CREATE TABLE servers (
 ```
 
 ### 25 git_providers Table
+
 Polymorphic umbrella table linking credentials for Git platforms (GitHub, GitLab, etc.).
+
 ```sql
 CREATE TABLE git_providers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -563,7 +613,9 @@ CREATE TABLE git_providers (
 ```
 
 ### 26 github_providers Table
+
 Stores GitHub App Client IDs, Installation IDs, and Private Keys.
+
 ```sql
 CREATE TABLE github_providers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -581,7 +633,9 @@ CREATE TABLE github_providers (
 ```
 
 ### 27 gitlab_providers Table
+
 Stores GitLab OAuth2 tokens and application IDs.
+
 ```sql
 CREATE TABLE gitlab_providers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -601,7 +655,9 @@ CREATE TABLE gitlab_providers (
 ```
 
 ### 28 gitea_providers Table
+
 Stores Gitea integration access details.
+
 ```sql
 CREATE TABLE gitea_providers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -622,7 +678,9 @@ CREATE TABLE gitea_providers (
 ```
 
 ### 29 bitbucket_providers Table
+
 Stores Bitbucket App password keys.
+
 ```sql
 CREATE TABLE bitbucket_providers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -638,7 +696,9 @@ CREATE TABLE bitbucket_providers (
 ```
 
 ### 30 applications Table
+
 Configures applications, buildpacks (Nixpacks, Dockerfile), Git sources, environment variables, resource limits, and preview settings.
+
 ```sql
 CREATE TABLE applications (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -766,7 +826,9 @@ CREATE TABLE applications (
 ```
 
 ### 31 compose_projects Table
+
 Stores configuration settings for multi-container Docker Compose stacks.
+
 ```sql
 CREATE TABLE compose_projects (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -837,7 +899,9 @@ CREATE TABLE compose_projects (
 ```
 
 ### 32 domains Table
+
 Saves host domains mapped to apps or compose projects, with TLS resolver configurations.
+
 ```sql
 CREATE TABLE domains (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -867,7 +931,9 @@ CREATE TABLE domains (
 ```
 
 ### 33 patches Table
+
 Saves text files/patches applied to files inside the workspace directory during builds.
+
 ```sql
 CREATE TABLE patches (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -889,7 +955,9 @@ CREATE TABLE patches (
 ```
 
 ### 34 deployments Table
+
 Contains the execution logs and status metadata for individual container deployment history.
+
 ```sql
 CREATE TABLE deployments (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -913,7 +981,9 @@ CREATE TABLE deployments (
 ```
 
 ### 35 rollbacks Table
+
 Saves context snapshots and image tags of past stable builds to allow 1-click manual registry rollback.
+
 ```sql
 CREATE TABLE rollbacks (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -926,7 +996,9 @@ CREATE TABLE rollbacks (
 ```
 
 ### 36 mounts Table
+
 Saves bind directory paths, volume paths, or configuration files mounted to services.
+
 ```sql
 CREATE TABLE mounts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -958,7 +1030,9 @@ CREATE TABLE mounts (
 ```
 
 ### 37 certificates Table
+
 Saves manually uploaded SSL `.crt` and `.key` files.
+
 ```sql
 CREATE TABLE certificates (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -978,7 +1052,9 @@ CREATE TABLE certificates (
 ```
 
 ### 38 destinations Table
+
 Saves access credentials and configurations for S3-compatible remote storage backends.
+
 ```sql
 CREATE TABLE destinations (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1002,7 +1078,9 @@ CREATE TABLE destinations (
 ```
 
 ### 39 backups Table
+
 Configures cron-scheduled relational database logical dump backup tasks.
+
 ```sql
 CREATE TABLE backups (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1040,7 +1118,9 @@ CREATE TABLE backups (
 ```
 
 ### 40 volume_backups Table
+
 Configures cron-scheduled raw Docker volume compression and S3 upload.
+
 ```sql
 CREATE TABLE volume_backups (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1075,7 +1155,9 @@ CREATE TABLE volume_backups (
 ```
 
 ### 41 notif_slack Table
+
 Stores Slack Webhook configurations.
+
 ```sql
 CREATE TABLE notif_slack (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1085,7 +1167,9 @@ CREATE TABLE notif_slack (
 ```
 
 ### 42 notif_telegram Table
+
 Stores Telegram Bot configurations.
+
 ```sql
 CREATE TABLE notif_telegram (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1096,7 +1180,9 @@ CREATE TABLE notif_telegram (
 ```
 
 ### 43 notif_discord Table
+
 Stores Discord Webhook configurations.
+
 ```sql
 CREATE TABLE notif_discord (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1106,7 +1192,9 @@ CREATE TABLE notif_discord (
 ```
 
 ### 44 notif_email Table
+
 Stores SMTP mail server settings.
+
 ```sql
 CREATE TABLE notif_email (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1120,7 +1208,9 @@ CREATE TABLE notif_email (
 ```
 
 ### 45 notif_resend Table
+
 Stores Resend API service settings.
+
 ```sql
 CREATE TABLE notif_resend (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1131,7 +1221,9 @@ CREATE TABLE notif_resend (
 ```
 
 ### 46 notif_gotify Table
+
 Stores Gotify server access settings.
+
 ```sql
 CREATE TABLE notif_gotify (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1143,7 +1235,9 @@ CREATE TABLE notif_gotify (
 ```
 
 ### 47 notif_ntfy Table
+
 Stores Ntfy server access settings.
+
 ```sql
 CREATE TABLE notif_ntfy (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1155,7 +1249,9 @@ CREATE TABLE notif_ntfy (
 ```
 
 ### 48 notif_mattermost Table
+
 Stores Mattermost integration settings.
+
 ```sql
 CREATE TABLE notif_mattermost (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1166,7 +1262,9 @@ CREATE TABLE notif_mattermost (
 ```
 
 ### 49 notif_teams Table
+
 Stores Microsoft Teams Webhook settings.
+
 ```sql
 CREATE TABLE notif_teams (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1175,7 +1273,9 @@ CREATE TABLE notif_teams (
 ```
 
 ### 50 notif_lark Table
+
 Stores Lark Webhook integration settings.
+
 ```sql
 CREATE TABLE notif_lark (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1184,7 +1284,9 @@ CREATE TABLE notif_lark (
 ```
 
 ### 51 notif_pushover Table
+
 Stores Pushover mobile application alerts settings.
+
 ```sql
 CREATE TABLE notif_pushover (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1197,7 +1299,9 @@ CREATE TABLE notif_pushover (
 ```
 
 ### 52 notif_custom Table
+
 Stores Custom HTTP webhook endpoints and custom headers JSON.
+
 ```sql
 CREATE TABLE notif_custom (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1207,7 +1311,9 @@ CREATE TABLE notif_custom (
 ```
 
 ### 53 notifications Table
+
 Tracks active notification triggers for system events (app deploy, build error, db backup) and maps them to channel sub-tables.
+
 ```sql
 CREATE TABLE notifications (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1244,7 +1350,9 @@ CREATE TABLE notifications (
 ```
 
 ### 54 schedules Table
+
 Schedules automated tasks (bash or sh commands) to run inside containers or on the host.
+
 ```sql
 CREATE TABLE schedules (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1274,7 +1382,9 @@ CREATE TABLE schedules (
 ```
 
 ### 55 redirects Table
+
 Saves custom Traefik redirection middleware matching rules (regex and replacements).
+
 ```sql
 CREATE TABLE redirects (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1291,7 +1401,9 @@ CREATE TABLE redirects (
 ```
 
 ### 56 ports Table
+
 Defines host-published-to-container-target port mapping configurations.
+
 ```sql
 CREATE TABLE ports (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1310,7 +1422,9 @@ CREATE TABLE ports (
 ```
 
 ### 57 security Table
+
 Saves HTTP Basic authentication username and password credentials per application router.
+
 ```sql
 CREATE TABLE security (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1323,7 +1437,9 @@ CREATE TABLE security (
 ```
 
 ### 58 audit_logs Table
+
 Tracks user action trails and resource updates for security monitoring.
+
 ```sql
 CREATE TABLE audit_logs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1344,7 +1460,9 @@ CREATE TABLE audit_logs (
 ```
 
 ### 59 settings Table
+
 Configures global dashboard server configurations (Traefik resolvers, docker cleanup tasks, SSL domains).
+
 ```sql
 CREATE TABLE settings (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1366,7 +1484,9 @@ CREATE TABLE settings (
 ```
 
 ### 60 ai_settings Table
+
 Stores API key configuration keys and OpenAI-compatible endpoints to generate composing stack configs.
+
 ```sql
 CREATE TABLE ai_settings (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,

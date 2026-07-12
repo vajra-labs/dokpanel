@@ -33,8 +33,8 @@ func Fiber(cfg *conf.Config) *fiber.App {
 	app.Use(helmet.New(helmet.Config{}))
 	// Rate Limiting
 	app.Use(middle.RateLimit(middle.RateOption{
-		Limit:    cfg.RATE_LIMIT_MAX_REQ,
-		WindowMs: cfg.RATE_LIMIT_WINDOWS,
+		Limit:  cfg.RATE_LIMIT_MAX_REQ,
+		Window: cfg.RATE_LIMIT_WINDOWS,
 	}))
 	// CORS
 	app.Use(cors.New(cors.Config{

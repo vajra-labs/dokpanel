@@ -103,7 +103,7 @@ type TraefikTemplateData struct {
 func writeTraefikConfig(cfg *conf.Config, p *docker.AppPaths) error {
 	acmePath := filepath.Join(p.TRAEFIK_DYN_PATH, "acme.json")
 	if _, err := os.Stat(acmePath); err == nil {
-		if err := os.Chmod(acmePath, 0600); err != nil {
+		if err := os.Chmod(acmePath, 0o600); err != nil {
 			fmt.Printf("warn: failed to chmod acme.json %s: %v\n", acmePath, err)
 		}
 	}
@@ -147,7 +147,7 @@ func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) 
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
 
@@ -156,11 +156,11 @@ func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) 
 		return fmt.Errorf("parse template: %w", err)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return fmt.Errorf("open file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if err := tmpl.Execute(file, data); err != nil {
 		return fmt.Errorf("execute template: %w", err)
@@ -177,7 +177,7 @@ func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *do
 	if err != nil {
 		return fmt.Errorf("pull traefik image: %w", err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	_, _ = io.Copy(io.Discard, rc)
 	fmt.Println("Traefik image pulled")
 
@@ -236,22 +236,6 @@ func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *do
 
 	fmt.Printf("Traefik container started (id: %s)\n", resp.ID[:12])
 	return nil
-}
-
-// IsTraefikRunning checks if the traefik container is already up.
-func isTraefikRunning(ctx context.Context, c *client.Client) bool {
-	containers, err := c.ContainerList(ctx, client.ContainerListOptions{})
-	if err != nil {
-		return false
-	}
-	for _, ct := range containers.Items {
-		for _, name := range ct.Names {
-			if name == "/"+traefikContainer {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // TeardownTraefik stops and removes the Traefik container.
