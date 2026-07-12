@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	scalar "github.com/MarceloPetrucio/go-scalar-api-reference"
+	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gofiber/fiber/v3"
 
