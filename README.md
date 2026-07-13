@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🚀 dokpanel</h1>
+  <h1>🚀 Goploy</h1>
   <p><strong>A lightweight, high-performance deployment platform built with Go, Fiber v3, and React + TanStack Router</strong></p>
   <p>Self-hostable Platform as a Service (PaaS) for modern application deployment</p>
 </div>
@@ -9,7 +9,7 @@
 
 <br />
 
-dokpanel is a free, self-hostable deployment platform that simplifies application and database management with blazing-fast performance powered by Go.
+goploy is a free, self-hostable deployment platform that simplifies application and database management with blazing-fast performance powered by Go.
 
 ## ✨ Features
 
@@ -40,8 +40,8 @@ dokpanel is a free, self-hostable deployment platform that simplifies applicatio
 ### Installation
 
 ```bash
-git clone https://github.com/vajra-labs/dokpanel.git
-cd dokpanel
+git clone https://github.com/vajra-labs/goploy.git
+cd goploy
 task web:deps
 ```
 

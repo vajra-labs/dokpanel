@@ -1400,7 +1400,7 @@ CREATE TABLE `schedules` (
   CONSTRAINT `2` FOREIGN KEY (`compose_id`) REFERENCES `compose_projects` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT `3` FOREIGN KEY (`application_id`) REFERENCES `applications` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT `schedule_shell_type_check` CHECK (shell_type IN ('BASH', 'SH')),
-  CONSTRAINT `schedule_type_check` CHECK (schedule_type IN ('APPLICATION', 'COMPOSE', 'SERVER', 'DOKPANEL-SERVER'))
+  CONSTRAINT `schedule_type_check` CHECK (schedule_type IN ('APPLICATION', 'COMPOSE', 'SERVER', 'Goploy-SERVER'))
 ) STRICT;
 -- create index "schedules_app_name" to table: "schedules"
 CREATE UNIQUE INDEX `schedules_app_name` ON `schedules` (`app_name`);

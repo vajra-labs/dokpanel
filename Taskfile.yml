@@ -55,7 +55,7 @@ tasks:
     cmds:
       - task: mod:tidy
       - task: mod:clean
-      - go build -ldflags="-w -s -X dokpanel/src/conf.VERSION={{.VERSION}}" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}
+      - go build -ldflags="-w -s -X goploy/src/conf.VERSION={{.VERSION}}" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}
       - ls -lh {{.BINARY_NAME}}
 
   # Code Quality

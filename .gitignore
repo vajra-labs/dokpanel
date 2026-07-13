@@ -34,10 +34,10 @@ build-errors.log
 
 # Build artifacts
 # /bin/
-dokpanel
+goploy
 
-dokpanel.db
-dokpanel.sqlit
+goploy.db
+goploy.sqlit
 
 # Editor/IDE
 .idea/

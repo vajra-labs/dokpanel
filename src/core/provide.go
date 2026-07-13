@@ -1,10 +1,10 @@
-package src
+package core
 
 import (
 	"time"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/middle"
+	"goploy/src/conf"
+	"goploy/src/core/middle"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func Fiber(cfg *conf.Config) *fiber.App {
+func provideFiber(cfg *conf.Config) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:         cfg.NAME,
 		BodyLimit:       cfg.BODY_LIMIT,

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/lib/docker"
-	"dokpanel/src/logger"
-	"dokpanel/src/setup"
+	"goploy/src/conf"
+	"goploy/src/core/logger"
+	"goploy/src/setup"
+	"goploy/src/utility/docker"
 
 	"go.uber.org/fx"
 )
@@ -18,7 +18,7 @@ func run(runner *setup.Runner) {
 	teardown := len(os.Args) > 1 && os.Args[1] == "--teardown"
 
 	if teardown {
-		fmt.Println("Starting dokpanel teardown...")
+		fmt.Println("Starting goploy teardown...")
 		if err := runner.Teardown(ctx); err != nil {
 			fmt.Printf("Teardown failed: %v\n", err)
 			os.Exit(1)
@@ -27,7 +27,7 @@ func run(runner *setup.Runner) {
 		return
 	}
 
-	fmt.Println("Starting dokpanel setup...")
+	fmt.Println("Starting goploy setup...")
 	if err := runner.Setup(ctx); err != nil {
 		fmt.Printf("Setup failed: %v\n", err)
 		os.Exit(1)
@@ -50,5 +50,8 @@ func main() {
 		fmt.Printf("Startup failed: %v\n", err)
 		os.Exit(1)
 	}
-	defer app.Stop(ctx) //nolint:errcheck
+
+	defer func() {
+		_ = app.Stop(ctx)
+	}()
 }

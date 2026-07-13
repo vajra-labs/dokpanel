@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"time"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/db/repos"
-	"dokpanel/src/errx"
-	"dokpanel/src/lib/jwt"
-	"dokpanel/src/types"
+	"goploy/src/conf"
+	"goploy/src/core/errorx"
+	"goploy/src/db/repos"
+	"goploy/src/types"
+	"goploy/src/utility/jwt"
 )
 
 // createOptions holds options for creating a token.
@@ -64,9 +64,9 @@ func (s *TokenService) create(ctx context.Context, opts createOptions) (*Created
 			ExpiredAt: &expiredAt,
 		})
 		if err != nil {
-			return nil, errx.InternalServerError(
+			return nil, errorx.InternalServerError(
 				"Failed to save token", "TOKEN_SAVE_ERROR",
-				errx.WithCause(err),
+				errorx.WithCause(err),
 			)
 		}
 	}
@@ -81,7 +81,7 @@ func (s *TokenService) Verify(tokenStr string, tokenType types.TOKEN) (*jwt.Payl
 		return nil, err
 	}
 	if payload.TokenType != tokenType {
-		return nil, errx.UnauthorizedError("Token type is invalid", "INVALID_TOKEN_TYPE")
+		return nil, errorx.UnauthorizedError("Token type is invalid", "INVALID_TOKEN_TYPE")
 	}
 	return payload, nil
 }
@@ -123,24 +123,24 @@ func (s *TokenService) AddBlacklist(ctx context.Context, tokenStr string, many b
 
 	record, err := s.queries.GetJwtTokenByJti(ctx, payload.ID)
 	if err != nil {
-		return "", errx.UnauthorizedError(
+		return "", errorx.UnauthorizedError(
 			"Token not found", "TOKEN_NOT_FOUND",
-			errx.WithCause(err),
+			errorx.WithCause(err),
 		)
 	}
 
 	isBlacklisted := record.IsBlacklist != nil && *record.IsBlacklist == 1
 	if isBlacklisted {
-		return "", errx.BadRequestError("Token is already blacklisted", "TOKEN_ALREADY_BLACKLISTED")
+		return "", errorx.BadRequestError("Token is already blacklisted", "TOKEN_ALREADY_BLACKLISTED")
 	}
 
 	now := time.Now().Unix()
 	blacklisted := int64(1)
 
 	if many {
-		userID, err := strconv.ParseInt(payload.Subject, 10, 64)
-		if err != nil {
-			return "", errx.InternalServerError("Invalid subject in token", "INVALID_TOKEN_SUB")
+		userID, parseErr := strconv.ParseInt(payload.Subject, 10, 64)
+		if parseErr != nil {
+			return "", errorx.InternalServerError("Invalid subject in token", "INVALID_TOKEN_SUB")
 		}
 		err = s.queries.UpdateJwtTokensByUserID(ctx, repos.UpdateJwtTokensByUserIDParams{
 			IsBlacklist: &blacklisted,
@@ -155,9 +155,9 @@ func (s *TokenService) AddBlacklist(ctx context.Context, tokenStr string, many b
 		})
 	}
 	if err != nil {
-		return "", errx.InternalServerError(
+		return "", errorx.InternalServerError(
 			"Failed to blacklist token", "TOKEN_BLACKLIST_ERROR",
-			errx.WithCause(err),
+			errorx.WithCause(err),
 		)
 	}
 
@@ -177,15 +177,15 @@ func (s *TokenService) RefreshAccess(ctx context.Context, refreshToken string, r
 		IsBlacklist: &notBlacklisted,
 	})
 	if err != nil {
-		return nil, errx.UnauthorizedError(
+		return nil, errorx.UnauthorizedError(
 			"Refresh token is blacklisted or invalid", "TOKEN_BLACKLISTED",
-			errx.WithCause(err),
+			errorx.WithCause(err),
 		)
 	}
 
 	userID, err := strconv.ParseInt(payload.Subject, 10, 64)
 	if err != nil {
-		return nil, errx.InternalServerError("Invalid subject in token", "INVALID_TOKEN_SUB")
+		return nil, errorx.InternalServerError("Invalid subject in token", "INVALID_TOKEN_SUB")
 	}
 
 	return s.create(ctx, createOptions{

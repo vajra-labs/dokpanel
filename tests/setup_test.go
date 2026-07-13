@@ -5,12 +5,13 @@ import (
 	"os"
 	"testing"
 
-	"dokpanel/src"
-	"dokpanel/src/apis"
-	"dokpanel/src/conf"
-	"dokpanel/src/db"
-	"dokpanel/src/docs"
-	"dokpanel/src/logger"
+	"goploy/src/apis"
+	"goploy/src/conf"
+	"goploy/src/core"
+	"goploy/src/db"
+	"goploy/src/docs"
+	"goploy/src/service"
+	"goploy/src/utility"
 
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/fx"
@@ -23,12 +24,13 @@ func TestMain(m *testing.M) {
 
 	fxApp := fx.New(
 		fx.NopLogger,
-		conf.Module,
-		logger.Module,
 		db.Module,
+		conf.Module,
+		core.Module,
 		docs.Module,
 		apis.Module,
-		fx.Provide(src.Fiber),
+		utility.Module,
+		service.Module,
 		fx.Populate(&fiberApp),
 	)
 

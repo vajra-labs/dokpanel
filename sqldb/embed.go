@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"embed"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog/log"

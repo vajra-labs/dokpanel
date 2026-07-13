@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 
 	"github.com/moby/moby/client"
 )

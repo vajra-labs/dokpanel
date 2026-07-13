@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"dokpanel/src/types"
+	"goploy/src/types"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -48,7 +48,7 @@ func provideConfig() *Config {
 	}
 	GO_ENV := getEnv("GO_ENV", types.DEV)
 	cfg := &Config{
-		NAME:               "DokPanel",
+		NAME:               "Goploy",
 		PORT:               getEnvInt("PORT", 8000),
 		HOST:               getEnv("HOST", "0.0.0.0"),
 		GO_ENV:             GO_ENV,

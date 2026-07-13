@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"

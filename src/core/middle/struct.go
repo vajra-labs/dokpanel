@@ -1,7 +1,7 @@
 package middle
 
 import (
-	"dokpanel/src/errx"
+	"goploy/src/core/errorx"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -19,7 +19,7 @@ func NewStructValidator() *StructValidator {
 func (v *StructValidator) Validate(out any) error {
 	err := v.validate.Struct(out)
 	if err != nil {
-		return errx.BadRequestError(err.Error(), "VALIDATION_ERROR")
+		return errorx.BadRequestError(err.Error(), "VALIDATION_ERROR")
 	}
 	return nil
 }

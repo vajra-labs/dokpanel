@@ -1,6 +1,6 @@
 # Tech Stack
 
-Dokpanel is a lightweight, single-server, self-hosted deployment dashboard designed to monitor and manage Docker Swarm applications, relational databases, and compose stacks. The application is built with a Go backend (Fiber v3) and a modern React dashboard (React Router v7 + Bun).
+Goploy is a lightweight, single-server, self-hosted deployment dashboard designed to monitor and manage Docker Swarm applications, relational databases, and compose stacks. The application is built with a Go backend (Fiber v3) and a modern React dashboard (React Router v7 + Bun).
 
 ---
 

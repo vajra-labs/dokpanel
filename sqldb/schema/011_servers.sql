@@ -1,4 +1,4 @@
--- Remote servers managed by dokpanel via SSH
+-- Remote servers managed by goploy via SSH
 CREATE TABLE servers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL,

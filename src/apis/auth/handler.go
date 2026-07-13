@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"dokpanel/src/service"
+	"goploy/src/service"
 
 	"github.com/gofiber/fiber/v3"
 )

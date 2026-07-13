@@ -8,15 +8,14 @@ import (
 	"net"
 	"time"
 
-	"dokpanel/src"
-	"dokpanel/src/apis"
-	"dokpanel/src/conf"
-	"dokpanel/src/db"
-	"dokpanel/src/docs"
-	"dokpanel/src/lib"
-	"dokpanel/src/logger"
-	"dokpanel/src/service"
-	"dokpanel/web"
+	"goploy/src/apis"
+	"goploy/src/conf"
+	"goploy/src/core"
+	"goploy/src/db"
+	"goploy/src/docs"
+	"goploy/src/service"
+	"goploy/src/utility"
+	"goploy/web"
 
 	"github.com/gofiber/fiber/v3"
 	zerolog "github.com/rs/zerolog/log"
@@ -59,14 +58,13 @@ var FxLogger = fx.WithLogger(func(cfg *conf.Config) fxevent.Logger {
 func main() {
 	app := fx.New(
 		FxLogger,
-		conf.Module,
-		logger.Module,
 		db.Module,
-		apis.Module,
+		conf.Module,
+		core.Module,
 		docs.Module,
-		lib.Module,
+		apis.Module,
+		utility.Module,
 		service.Module,
-		fx.Provide(src.Fiber),
 		fx.Invoke(web.ServeSPA),
 		fx.Invoke(StartServer),
 	)

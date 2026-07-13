@@ -1,4 +1,4 @@
-module dokpanel
+module goploy
 
 go 1.26.3
 
@@ -12,6 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mattn/go-sqlite3 v1.14.42
 	github.com/moby/moby/api v1.54.2
 	github.com/moby/moby/client v0.4.1

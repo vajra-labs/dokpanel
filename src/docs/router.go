@@ -8,7 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gofiber/fiber/v3"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 )
 
 type Handler struct {

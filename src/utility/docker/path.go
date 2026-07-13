@@ -3,11 +3,11 @@ package docker
 import (
 	"path/filepath"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 )
 
 type AppPaths struct {
-	BASE_PATH               string // /etc/dokpanel  OR  ./.docker
+	BASE_PATH               string // /etc/goploy  OR  ./.docker
 	TRAEFIK_PATH            string // BASE/traefik
 	TRAEFIK_DYN_PATH        string // BASE/traefik/dynamic
 	CERTIFICATES_PATH       string // BASE/traefik/dynamic/certificates
@@ -25,7 +25,7 @@ type AppPaths struct {
 func providePaths(cfg *conf.Config) *AppPaths {
 	base := "./.docker" // dev default
 	if cfg.IS_PROD {
-		base = "/etc/dokpanel"
+		base = "/etc/goploy"
 	}
 	// Docker bind mounts require absolute paths
 	if abs, err := filepath.Abs(base); err == nil {

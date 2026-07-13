@@ -7,7 +7,7 @@ CREATE TABLE schedules (
 	service_name TEXT,
 	-- shell_type: BASH | SH
 	shell_type TEXT NOT NULL DEFAULT 'BASH',
-	-- schedule_type: APPLICATION | COMPOSE | SERVER | DOKPANEL-SERVER
+	-- schedule_type: APPLICATION | COMPOSE | SERVER | Goploy-SERVER
 	schedule_type TEXT NOT NULL DEFAULT 'APPLICATION',
 	command TEXT NOT NULL,
 	script TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE schedules (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT schedule_shell_type_check CHECK (shell_type IN ('BASH', 'SH')),
-	CONSTRAINT schedule_type_check CHECK (schedule_type IN ('APPLICATION', 'COMPOSE', 'SERVER', 'DOKPANEL-SERVER'))
+	CONSTRAINT schedule_type_check CHECK (schedule_type IN ('APPLICATION', 'COMPOSE', 'SERVER', 'Goploy-SERVER'))
 ) STRICT;
 
 -- Indexes for faster queries

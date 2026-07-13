@@ -1,10 +1,10 @@
 package apis
 
 import (
-	"dokpanel/src/apis/auth"
-	"dokpanel/src/apis/health"
-	"dokpanel/src/docs"
-	"dokpanel/src/middle"
+	"goploy/src/apis/auth"
+	"goploy/src/apis/health"
+	"goploy/src/core/middle"
+	"goploy/src/docs"
 
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/fx"
@@ -20,9 +20,9 @@ type RouterParams struct {
 
 func Register(p RouterParams) {
 	api := p.App.Group("/api")
-	health.Router(api, p.HealthHandler)
-	auth.Router(api, p.AuthHandler)
 	docs.Router(api, p.DocsHandler)
+	auth.Router(api, p.AuthHandler)
+	health.Router(api, p.HealthHandler)
 	api.Use(middle.NotFoundHandler)
 }
 

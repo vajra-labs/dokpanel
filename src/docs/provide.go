@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/errx"
+	"goploy/src/conf"
+	"goploy/src/core/errorx"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -33,11 +33,11 @@ func provideOpenAPI(cfg *conf.Config) huma.API {
 				Description: fmt.Sprintf("Complete API documentation for %s - manage applications, databases, and orchestrate your infrastructure.", cfg.NAME),
 				Contact: &huma.Contact{
 					Name: fmt.Sprintf("%s Team", cfg.NAME),
-					URL:  "https://dokpanel.com",
+					URL:  "https://goploy.com",
 				},
 				License: &huma.License{
 					Name: "MIT",
-					URL:  "https://github.com/vajra-labs/dokpanel/blob/canary/LICENSE",
+					URL:  "https://github.com/vajra-labs/goploy/blob/canary/LICENSE",
 				},
 			},
 			Tags:  tags,
@@ -59,7 +59,7 @@ func provideOpenAPI(cfg *conf.Config) huma.API {
 	}
 
 	// Register custom HttpError in components/schemas
-	r.Components.Schemas.Schema(reflect.TypeOf(errx.HttpError{}), true, "HttpError")
+	r.Components.Schemas.Schema(reflect.TypeOf(errorx.HttpError{}), true, "HttpError")
 
 	return api
 }

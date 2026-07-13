@@ -10,8 +10,8 @@ import (
 	"text/template"
 	"time"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/lib/docker"
+	"goploy/src/conf"
+	"goploy/src/utility/docker"
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
@@ -21,7 +21,7 @@ import (
 const (
 	traefikVersion   = "3.7.5"
 	traefikImage     = "traefik:v" + traefikVersion
-	traefikContainer = "dokpanel-traefik"
+	traefikContainer = "goploy-traefik"
 )
 
 const traefikYMLTemplate = `global:
@@ -40,7 +40,7 @@ providers:
     network: "{{ .NetworkName }}"
 {{- end }}
   file:
-    directory: "/etc/dokpanel/traefik/dynamic"
+    directory: "/etc/goploy/traefik/dynamic"
     watch: true
 entryPoints:
   web:
@@ -61,7 +61,7 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: "test@localhost.com"
-      storage: "/etc/dokpanel/traefik/dynamic/acme.json"
+      storage: "/etc/goploy/traefik/dynamic/acme.json"
       httpChallenge:
         entryPoint: "web"
 {{- end }}
@@ -75,7 +75,7 @@ const middlewaresYMLTemplate = `http:
         permanent: true
 `
 
-const dokpanelYMLTemplate = `http:
+const goployYMLTemplate = `http:
   routers:
     {{ .Name }}-router-app:
       rule: {{ .DokpanelRule }}
@@ -99,7 +99,7 @@ type TraefikTemplateData struct {
 	DokpanelRule string
 }
 
-// WriteTraefikConfig writes traefik.yml, middlewares.yml, and dokpanel.yml.
+// WriteTraefikConfig writes traefik.yml, middlewares.yml, and goploy.yml.
 func writeTraefikConfig(cfg *conf.Config, p *docker.AppPaths) error {
 	acmePath := filepath.Join(p.TRAEFIK_DYN_PATH, "acme.json")
 	if _, err := os.Stat(acmePath); err == nil {
@@ -126,7 +126,7 @@ func writeTraefikConfig(cfg *conf.Config, p *docker.AppPaths) error {
 	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, "middlewares.yml"), middlewaresYMLTemplate, &data); err != nil {
 		return fmt.Errorf("write middlewares.yml: %w", err)
 	}
-	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, appName+".yml"), dokpanelYMLTemplate, &data); err != nil {
+	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, appName+".yml"), goployYMLTemplate, &data); err != nil {
 		return fmt.Errorf("write %s.yml: %w", appName, err)
 	}
 
@@ -195,7 +195,7 @@ func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *do
 		RestartPolicy: container.RestartPolicy{Name: "always"},
 		Binds: []string{
 			filepath.Join(p.TRAEFIK_PATH, "traefik.yml") + ":/etc/traefik/traefik.yml",
-			p.TRAEFIK_DYN_PATH + ":/etc/dokpanel/traefik/dynamic",
+			p.TRAEFIK_DYN_PATH + ":/etc/goploy/traefik/dynamic",
 			"/var/run/docker.sock:/var/run/docker.sock",
 		},
 		PortBindings: network.PortMap{

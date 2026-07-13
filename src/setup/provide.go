@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/lib/docker"
+	"goploy/src/conf"
+	"goploy/src/utility/docker"
 
 	"github.com/moby/moby/client"
 )

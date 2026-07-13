@@ -4,17 +4,17 @@ import (
 	"errors"
 	"time"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/errx"
-	"dokpanel/src/types"
+	"goploy/src/conf"
+	"goploy/src/core/errorx"
+	"goploy/src/types"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
 const (
-	iss = "dokpanel"
-	aud = "dokpanel-client"
+	iss = "goploy"
+	aud = "goploy-client"
 )
 
 // Payload holds standard JWT claims.
@@ -62,9 +62,9 @@ func (j *JwtToken) Sign(payload Payload, exp time.Duration) (Token, error) {
 
 	signed, err := jwt.NewWithClaims(jwt.SigningMethodHS256, payload).SignedString(j.secret)
 	if err != nil {
-		return Token{}, errx.InternalServerError(
+		return Token{}, errorx.InternalServerError(
 			"Failed to sign JWT token", "JWT_SIGN_ERROR",
-			errx.WithCause(err),
+			errorx.WithCause(err),
 		)
 	}
 
@@ -77,25 +77,25 @@ func (j *JwtToken) Verify(tokenStr string) (*Payload, error) {
 
 	token, err := jwt.ParseWithClaims(tokenStr, &payload, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errx.UnauthorizedError("Unexpected signing method", "INVALID_JWT")
+			return nil, errorx.UnauthorizedError("Unexpected signing method", "INVALID_JWT")
 		}
 		return j.secret, nil
 	}, jwt.WithIssuer(iss), jwt.WithAudience(aud), jwt.WithExpirationRequired())
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, errx.UnauthorizedError(
+			return nil, errorx.UnauthorizedError(
 				"JWT token has expired", "JWT_EXPIRED",
-				errx.WithCause(err),
+				errorx.WithCause(err),
 			)
 		}
-		return nil, errx.UnauthorizedError(
+		return nil, errorx.UnauthorizedError(
 			"Invalid JWT token", "INVALID_JWT",
-			errx.WithCause(err),
+			errorx.WithCause(err),
 		)
 	}
 
 	if !token.Valid {
-		return nil, errx.UnauthorizedError("Invalid JWT token", "INVALID_JWT")
+		return nil, errorx.UnauthorizedError("Invalid JWT token", "INVALID_JWT")
 	}
 
 	return &payload, nil

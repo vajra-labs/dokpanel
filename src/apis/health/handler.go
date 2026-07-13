@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"time"
 
-	"dokpanel/src/conf"
+	"goploy/src/conf"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v3"

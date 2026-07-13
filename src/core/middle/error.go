@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"dokpanel/src/conf"
-	"dokpanel/src/errx"
+	"goploy/src/conf"
+	"goploy/src/core/errorx"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog/log"
@@ -16,7 +16,7 @@ import (
 func ErrorHandler(cfg *conf.Config) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
 		// Handle known HttpError
-		if httpErr, ok := errx.IsHttpError(err); ok {
+		if httpErr, ok := errorx.IsHttpError(err); ok {
 			cause := httpErr.Cause()
 			if cause != nil {
 				log.Error().
@@ -63,10 +63,10 @@ func NotFoundHandler(ctx fiber.Ctx) error {
 	path := ctx.Path()
 	method := ctx.Method()
 	// BadRequest Error
-	return errx.BadRequestError(
+	return errorx.BadRequestError(
 		"Wrong Path",
 		"NOT_FOUND",
-		errx.WithMeta("path", path),
-		errx.WithMeta("method", method),
+		errorx.WithMeta("path", path),
+		errorx.WithMeta("method", method),
 	)
 }

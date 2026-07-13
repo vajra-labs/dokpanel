@@ -3,7 +3,7 @@ package health
 import (
 	"net/http"
 
-	"dokpanel/src/docs"
+	"goploy/src/docs"
 
 	"github.com/danielgtaylor/huma/v2"
 )
