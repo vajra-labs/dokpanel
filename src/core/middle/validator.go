@@ -1,7 +1,7 @@
 package middle
 
 import (
-	"goploy/src/core/errorx"
+	"goploy/src/core/throw"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -19,7 +19,7 @@ func NewStructValidator() *StructValidator {
 func (v *StructValidator) Validate(out any) error {
 	err := v.validate.Struct(out)
 	if err != nil {
-		return errorx.BadRequestError(err.Error(), "VALIDATION_ERROR")
+		return throw.BadRequestError(err.Error(), "VALIDATION_ERROR")
 	}
 	return nil
 }

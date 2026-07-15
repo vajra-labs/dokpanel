@@ -48,11 +48,6 @@ tasks:
     desc: Build optimized binary for current OS
     cmds:
       - task: web:build
-      - task: server:build
-
-  server:build:
-    desc: Build Go server binary only.
-    cmds:
       - task: mod:tidy
       - task: mod:clean
       - go build -ldflags="-w -s -X goploy/src/conf.VERSION={{.VERSION}}" -trimpath -o {{.BINARY_NAME}} {{.MAIN_PATH}}

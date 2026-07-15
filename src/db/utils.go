@@ -6,10 +6,8 @@ import (
 	"math/big"
 	"strings"
 
-	"goploy/src/temp"
+	"goploy/src/utils"
 )
-
-const alphabet = "abcdefghijklmnopqrstuvwxyz123456789"
 
 var verbs = []string{
 	"compress", "connect", "copy", "generate", "parse",
@@ -42,7 +40,7 @@ func GenAppName(appType string) string {
 		verb,
 		adjective,
 		noun,
-		temp.GenerateHash(6),
+		utils.GenerateHash(6),
 	)
 }
 
@@ -56,7 +54,7 @@ func CleanAppName(appName string) string {
 // BuildAppName follows same logic as TypeScript.
 func BuildAppName(appType string, baseAppName string) string {
 	if strings.TrimSpace(baseAppName) != "" {
-		return fmt.Sprintf("%s-%s", CleanAppName(baseAppName), temp.GeneratePassword(6))
+		return fmt.Sprintf("%s-%s", CleanAppName(baseAppName), utils.GeneratePassword(6))
 	}
 	return GenAppName(appType)
 }

@@ -1,7 +1,8 @@
-package temp
+package utils
 
 import (
-	"encoding/json"
+	"context"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"net/http"
@@ -70,26 +71,21 @@ type TemplateFiles struct {
 var httpClient = &http.Client{Timeout: fetchTimeout}
 
 // FetchTemplatesList fetches the list of available templates from CDN
-func FetchTemplatesList() ([]TemplateMetadata, error) {
-	resp, err := httpClient.Get(fmt.Sprintf("%s/meta.json", baseURL))
+func FetchTemplatesList(ctx context.Context) ([]TemplateMetadata, error) {
+	resp, err := fetchBytes(ctx, fmt.Sprintf("%s/meta.json", baseURL))
 	if err != nil {
-		return nil, fmt.Errorf("Fetch templates list: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Fetch templates list: unexpected status %s", resp.Status)
+		return nil, fmt.Errorf("fetch templates list: %w", err)
 	}
 
 	var templates []TemplateMetadata
-	if err := json.NewDecoder(resp.Body).Decode(&templates); err != nil {
+	if err := json.Unmarshal(resp, &templates); err != nil {
 		return nil, fmt.Errorf("decode templates list: %w", err)
 	}
 	return templates, nil
 }
 
 // FetchTemplateFiles fetches template.toml + docker-compose.yml from CDN concurrently
-func FetchTemplateFiles(templateID string) (*TemplateFiles, error) {
+func FetchTemplateFiles(ctx context.Context, templateID string) (*TemplateFiles, error) {
 	type result struct {
 		data []byte
 		err  error
@@ -102,11 +98,11 @@ func FetchTemplateFiles(templateID string) (*TemplateFiles, error) {
 	composeURL := fmt.Sprintf("%s/blueprints/%s/docker-compose.yml", baseURL, templateID)
 
 	go func() {
-		data, err := fetchBytes(tomlURL)
+		data, err := fetchBytes(ctx, tomlURL)
 		tomlCh <- result{data, err}
 	}()
 	go func() {
-		data, err := fetchBytes(composeURL)
+		data, err := fetchBytes(ctx, composeURL)
 		composeCh <- result{data, err}
 	}()
 
@@ -132,13 +128,17 @@ func FetchTemplateFiles(templateID string) (*TemplateFiles, error) {
 	}, nil
 }
 
-// fetchBytes does a GET and returns body bytes
-func fetchBytes(url string) ([]byte, error) {
-	resp, err := httpClient.Get(url)
+// fetchBytes does a GET with context and returns body bytes
+func fetchBytes(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %s for %s", resp.Status, url)
 	}

@@ -9,9 +9,8 @@ import (
 	"goploy/src/conf"
 	"goploy/src/core"
 	"goploy/src/db"
-	"goploy/src/docs"
+	"goploy/src/pkg"
 	"goploy/src/service"
-	"goploy/src/utility"
 
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/fx"
@@ -24,12 +23,11 @@ func TestMain(m *testing.M) {
 
 	fxApp := fx.New(
 		fx.NopLogger,
-		db.Module,
 		conf.Module,
+		db.Module,
 		core.Module,
-		docs.Module,
 		apis.Module,
-		utility.Module,
+		pkg.Module,
 		service.Module,
 		fx.Populate(&fiberApp),
 	)

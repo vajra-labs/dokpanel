@@ -1,11 +1,11 @@
-package docs
+package apidoc
 
 import (
 	"fmt"
 	"reflect"
 
 	"goploy/src/conf"
-	"goploy/src/core/errorx"
+	"goploy/src/core/throw"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -59,7 +59,7 @@ func provideOpenAPI(cfg *conf.Config) huma.API {
 	}
 
 	// Register custom HttpError in components/schemas
-	r.Components.Schemas.Schema(reflect.TypeOf(errorx.HttpError{}), true, "HttpError")
+	r.Components.Schemas.Schema(reflect.TypeOf(throw.HttpError{}), true, "HttpError")
 
 	return api
 }

@@ -12,9 +12,8 @@ import (
 	"goploy/src/conf"
 	"goploy/src/core"
 	"goploy/src/db"
-	"goploy/src/docs"
+	"goploy/src/pkg"
 	"goploy/src/service"
-	"goploy/src/utility"
 	"goploy/web"
 
 	"github.com/gofiber/fiber/v3"
@@ -58,12 +57,11 @@ var FxLogger = fx.WithLogger(func(cfg *conf.Config) fxevent.Logger {
 func main() {
 	app := fx.New(
 		FxLogger,
-		db.Module,
 		conf.Module,
+		db.Module,
 		core.Module,
-		docs.Module,
 		apis.Module,
-		utility.Module,
+		pkg.Module,
 		service.Module,
 		fx.Invoke(web.ServeSPA),
 		fx.Invoke(StartServer),

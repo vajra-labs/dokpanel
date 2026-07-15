@@ -1,11 +1,11 @@
 // Package docs provides OpenAPI 3.1 spec generation and Scalar UI rendering.
 // It uses Huma for spec building and go-scalar-api-reference for the UI.
-package docs
+package apidoc
 
 import "go.uber.org/fx"
 
 var Module = fx.Module(
-	"openapi",
+	"apidoc",
 	fx.Provide(provideOpenAPI),
-	fx.Provide(newHandler),
+	fx.Invoke(invokeRouter),
 )

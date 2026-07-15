@@ -11,9 +11,9 @@ import (
 
 const createSchedule = `-- name: CreateSchedule :one
 INSERT INTO schedules (
-    name, description, cron_expression, app_name, service_name,
-    shell_type, schedule_type, command, script, timezone, enabled,
-    application_id, compose_id, server_id, organization_id
+	name, description, cron_expression, app_name, service_name,
+	shell_type, schedule_type, command, script, timezone, enabled,
+	application_id, compose_id, server_id, organization_id
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING id, name, description, cron_expression, app_name, service_name, shell_type, schedule_type, command, script, timezone, enabled, application_id, compose_id, server_id, organization_id, created_at, updated_at
 `
@@ -118,13 +118,13 @@ func (q *Queries) GetScheduleByID(ctx context.Context, id int64) (Schedule, erro
 }
 
 const getScheduleWithRelations = `-- name: GetScheduleWithRelations :one
-SELECT 
-    s.id, s.name, s.description, s.cron_expression, s.app_name, s.service_name, s.shell_type, s.schedule_type, s.command, s.script, s.timezone, s.enabled, s.application_id, s.compose_id, s.server_id, s.organization_id, s.created_at, s.updated_at,
-    a.app_name AS application_app_name,
-    a.server_id AS application_server_id,
-    c.app_name AS compose_app_name,
-    c.server_id AS compose_server_id,
-    srv.name AS server_name
+SELECT
+	s.id, s.name, s.description, s.cron_expression, s.app_name, s.service_name, s.shell_type, s.schedule_type, s.command, s.script, s.timezone, s.enabled, s.application_id, s.compose_id, s.server_id, s.organization_id, s.created_at, s.updated_at,
+	a.app_name AS application_app_name,
+	a.server_id AS application_server_id,
+	c.app_name AS compose_app_name,
+	c.server_id AS compose_server_id,
+	srv.name AS server_name
 FROM schedules s
 LEFT JOIN applications a ON s.application_id = a.id
 LEFT JOIN compose_projects c ON s.compose_id = c.id
@@ -189,50 +189,14 @@ func (q *Queries) GetScheduleWithRelations(ctx context.Context, id int64) (GetSc
 	return i, err
 }
 
-const getServerWithSSHKey = `-- name: GetServerWithSSHKey :one
-SELECT 
-    s.id,
-    s.name,
-    s.ip_address,
-    s.port,
-    s.username,
-    k.private_key
-FROM servers s
-LEFT JOIN ssh_keys k ON s.ssh_key_id = k.id
-WHERE s.id = ?
-`
-
-type GetServerWithSSHKeyRow struct {
-	ID         int64   `json:"id"`
-	Name       string  `json:"name"`
-	IpAddress  string  `json:"ip_address"`
-	Port       int64   `json:"port"`
-	Username   string  `json:"username"`
-	PrivateKey *string `json:"private_key"`
-}
-
-func (q *Queries) GetServerWithSSHKey(ctx context.Context, id int64) (GetServerWithSSHKeyRow, error) {
-	row := q.db.QueryRowContext(ctx, getServerWithSSHKey, id)
-	var i GetServerWithSSHKeyRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.IpAddress,
-		&i.Port,
-		&i.Username,
-		&i.PrivateKey,
-	)
-	return i, err
-}
-
 const listEnabledSchedules = `-- name: ListEnabledSchedules :many
-SELECT 
-    s.id, s.name, s.description, s.cron_expression, s.app_name, s.service_name, s.shell_type, s.schedule_type, s.command, s.script, s.timezone, s.enabled, s.application_id, s.compose_id, s.server_id, s.organization_id, s.created_at, s.updated_at,
-    a.app_name AS application_app_name,
-    a.server_id AS application_server_id,
-    c.app_name AS compose_app_name,
-    c.server_id AS compose_server_id,
-    srv.name AS server_name
+SELECT
+	s.id, s.name, s.description, s.cron_expression, s.app_name, s.service_name, s.shell_type, s.schedule_type, s.command, s.script, s.timezone, s.enabled, s.application_id, s.compose_id, s.server_id, s.organization_id, s.created_at, s.updated_at,
+	a.app_name AS application_app_name,
+	a.server_id AS application_server_id,
+	c.app_name AS compose_app_name,
+	c.server_id AS compose_server_id,
+	srv.name AS server_name
 FROM schedules s
 LEFT JOIN applications a ON s.application_id = a.id
 LEFT JOIN compose_projects c ON s.compose_id = c.id
@@ -315,22 +279,22 @@ func (q *Queries) ListEnabledSchedules(ctx context.Context) ([]ListEnabledSchedu
 
 const updateSchedule = `-- name: UpdateSchedule :one
 UPDATE schedules
-SET 
-    name = ?,
-    description = ?,
-    cron_expression = ?,
-    service_name = ?,
-    shell_type = ?,
-    schedule_type = ?,
-    command = ?,
-    script = ?,
-    timezone = ?,
-    enabled = ?,
-    application_id = ?,
-    compose_id = ?,
-    server_id = ?,
-    organization_id = ?,
-    updated_at = (strftime('%s', 'now'))
+SET
+	name = ?,
+	description = ?,
+	cron_expression = ?,
+	service_name = ?,
+	shell_type = ?,
+	schedule_type = ?,
+	command = ?,
+	script = ?,
+	timezone = ?,
+	enabled = ?,
+	application_id = ?,
+	compose_id = ?,
+	server_id = ?,
+	organization_id = ?,
+	updated_at = (strftime('%s', 'now'))
 WHERE id = ?
 RETURNING id, name, description, cron_expression, app_name, service_name, shell_type, schedule_type, command, script, timezone, enabled, application_id, compose_id, server_id, organization_id, created_at, updated_at
 `

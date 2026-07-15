@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"goploy/src/docs"
+	"goploy/src/core/apidoc"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -20,12 +20,12 @@ func registerOpenApi(api huma.API) {
 			OperationID: "register-user",
 			Summary:     "Register User",
 			Description: "Creates a new user account using the provided registration details",
-			RequestBody: docs.Body(api, RegisterDto{}, true, "User registration information"),
-			Responses: docs.Responses(
-				docs.TextContent(http.StatusCreated, "User registered successfully"),
-				docs.ErrContent(http.StatusBadRequest, "Invalid request body"),
-				docs.ErrContent(http.StatusConflict, "Email already exists"),
-				docs.ErrContent(http.StatusInternalServerError, "Internal server error"),
+			RequestBody: apidoc.Body(api, RegisterDto{}, true, "User registration information"),
+			Responses: apidoc.Responses(
+				apidoc.TextContent(http.StatusCreated, "User registered successfully"),
+				apidoc.ErrContent(http.StatusBadRequest, "Invalid request body"),
+				apidoc.ErrContent(http.StatusConflict, "Email already exists"),
+				apidoc.ErrContent(http.StatusInternalServerError, "Internal server error"),
 			),
 		},
 	}
@@ -36,12 +36,12 @@ func registerOpenApi(api huma.API) {
 			OperationID: "login-user",
 			Summary:     "Login User",
 			Description: "Authenticates a user using email and password",
-			RequestBody: docs.Body(api, LoginDto{}, true, "User login credentials"),
-			Responses: docs.Responses(
-				docs.JsonContent(api, http.StatusOK, LoginRes{}, "User logged in successfully"),
-				docs.ErrContent(http.StatusBadRequest, "Invalid request body"),
-				docs.ErrContent(http.StatusUnauthorized, "Invalid email or password"),
-				docs.ErrContent(http.StatusInternalServerError, "Internal server error"),
+			RequestBody: apidoc.Body(api, LoginDto{}, true, "User login credentials"),
+			Responses: apidoc.Responses(
+				apidoc.JsonContent(api, http.StatusOK, LoginRes{}, "User logged in successfully"),
+				apidoc.ErrContent(http.StatusBadRequest, "Invalid request body"),
+				apidoc.ErrContent(http.StatusUnauthorized, "Invalid email or password"),
+				apidoc.ErrContent(http.StatusInternalServerError, "Internal server error"),
 			),
 		},
 	}

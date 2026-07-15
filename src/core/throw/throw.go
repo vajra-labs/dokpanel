@@ -1,4 +1,4 @@
-package errorx
+package throw
 
 import (
 	"github.com/gofiber/fiber/v3"

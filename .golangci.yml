@@ -6,7 +6,9 @@ linters:
     - errcheck
     - govet
     - ineffassign
-    - staticcheck
+    # staticcheck (honnef.co/go/tools v0.7.0) panics on Go 1.27 promoted-field
+    # struct literal syntax. Re-enable once staticcheck supports Go 1.27 stable.
+    # - staticcheck
     - unused
     - misspell
     - unconvert

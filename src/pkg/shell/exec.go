@@ -180,22 +180,6 @@ func execStream(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
 	}
 }
 
-type streamWriter struct {
-	buf    *bytes.Buffer
-	onData func(string)
-}
-
-func (w *streamWriter) Write(p []byte) (int, error) {
-	n, err := w.buf.Write(p)
-	if err != nil {
-		return n, err
-	}
-	if w.onData != nil {
-		w.onData(string(p))
-	}
-	return n, nil
-}
-
 // buildCmd constructs an *exec.Cmd from a command string and options.
 func buildCmd(ctx context.Context, command string, opts *ExecOptions) *exec.Cmd {
 	var cmd *exec.Cmd

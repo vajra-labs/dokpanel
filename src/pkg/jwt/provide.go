@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"goploy/src/conf"
-	"goploy/src/core/errorx"
+	"goploy/src/core/throw"
 	"goploy/src/types"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -42,12 +42,10 @@ func New(cfg *conf.Config) *JwtToken {
 // Payload creates a standard JWT payload for a given subject and token type.
 func (j *JwtToken) Payload(sub string, tokenType types.TOKEN) Payload {
 	return Payload{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  sub,
-			ID:       uuid.NewString(),
-			Issuer:   iss,
-			Audience: jwt.ClaimStrings{aud},
-		},
+		Subject:   sub,
+		ID:        uuid.NewString(),
+		Issuer:    iss,
+		Audience:  jwt.ClaimStrings{aud},
 		TokenType: tokenType,
 	}
 }
@@ -62,9 +60,9 @@ func (j *JwtToken) Sign(payload Payload, exp time.Duration) (Token, error) {
 
 	signed, err := jwt.NewWithClaims(jwt.SigningMethodHS256, payload).SignedString(j.secret)
 	if err != nil {
-		return Token{}, errorx.InternalServerError(
+		return Token{}, throw.InternalServerError(
 			"Failed to sign JWT token", "JWT_SIGN_ERROR",
-			errorx.WithCause(err),
+			throw.WithCause(err),
 		)
 	}
 
@@ -77,25 +75,25 @@ func (j *JwtToken) Verify(tokenStr string) (*Payload, error) {
 
 	token, err := jwt.ParseWithClaims(tokenStr, &payload, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errorx.UnauthorizedError("Unexpected signing method", "INVALID_JWT")
+			return nil, throw.UnauthorizedError("Unexpected signing method", "INVALID_JWT")
 		}
 		return j.secret, nil
 	}, jwt.WithIssuer(iss), jwt.WithAudience(aud), jwt.WithExpirationRequired())
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, errorx.UnauthorizedError(
+			return nil, throw.UnauthorizedError(
 				"JWT token has expired", "JWT_EXPIRED",
-				errorx.WithCause(err),
+				throw.WithCause(err),
 			)
 		}
-		return nil, errorx.UnauthorizedError(
+		return nil, throw.UnauthorizedError(
 			"Invalid JWT token", "INVALID_JWT",
-			errorx.WithCause(err),
+			throw.WithCause(err),
 		)
 	}
 
 	if !token.Valid {
-		return nil, errorx.UnauthorizedError("Invalid JWT token", "INVALID_JWT")
+		return nil, throw.UnauthorizedError("Invalid JWT token", "INVALID_JWT")
 	}
 
 	return &payload, nil

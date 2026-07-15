@@ -3,7 +3,7 @@ package health
 import (
 	"net/http"
 
-	"goploy/src/docs"
+	"goploy/src/core/apidoc"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -20,8 +20,8 @@ func registerOpenApi(api huma.API) {
 			OperationID: "get-ping",
 			Summary:     "Ping Server",
 			Description: "Checks whether the server is reachable and responding",
-			Responses: docs.Responses(
-				docs.TextContent(http.StatusOK, "Returns a simple pong response"),
+			Responses: apidoc.Responses(
+				apidoc.TextContent(http.StatusOK, "Returns a simple pong response"),
 			),
 		},
 	}
@@ -32,8 +32,8 @@ func registerOpenApi(api huma.API) {
 			OperationID: "get-pong",
 			Summary:     "Pong Server",
 			Description: "Responds to a ping request to confirm server availability",
-			Responses: docs.Responses(
-				docs.TextContent(http.StatusOK, "Returns a simple ping response"),
+			Responses: apidoc.Responses(
+				apidoc.TextContent(http.StatusOK, "Returns a simple ping response"),
 			),
 		},
 	}
@@ -44,9 +44,9 @@ func registerOpenApi(api huma.API) {
 			OperationID: "get-health",
 			Summary:     "Health Check",
 			Description: "Provides detailed information about server health and runtime status",
-			Responses: docs.Responses(
-				docs.JsonContent(api, http.StatusOK, HealthRes{}, "Returns server uptime, environment, version, timestamp, and memory usage"),
-				docs.ErrContent(http.StatusInternalServerError, "Internal server error"),
+			Responses: apidoc.Responses(
+				apidoc.JsonContent(api, http.StatusOK, HealthRes{}, "Returns server uptime, environment, version, timestamp, and memory usage"),
+				apidoc.ErrContent(http.StatusInternalServerError, "Internal server error"),
 			),
 		},
 	}

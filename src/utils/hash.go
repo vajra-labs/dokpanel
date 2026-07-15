@@ -1,4 +1,4 @@
-package temp
+package utils
 
 import (
 	"crypto/rand"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // GeneratePassword generates a cryptographically secure alphanumeric password.
@@ -61,8 +62,6 @@ func GenerateRandomDomain(serverIP, projectName string) string {
 }
 
 // GenerateJWT creates an HS256 JWT for template config embedding.
-// These are static config tokens (e.g. Supabase ANON_KEY) — NOT API session tokens.
-// If length > 0, returns random hex bytes instead (handles ${jwt:64} variant).
 func GenerateJWT(secret string, payload map[string]any, length int) string {
 	// jwt:<length> variant — just random hex, not a real JWT
 	if length > 0 {
@@ -97,4 +96,18 @@ func GenerateJWT(secret string, payload map[string]any, length int) string {
 		return fmt.Sprintf("jwt-error: %v", err)
 	}
 	return signed
+}
+
+// HashPassword hashes a plain-text password using bcrypt.
+func HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// VerifyPassword checks if a plain-text password matches a bcrypt hash.
+func VerifyPassword(password, hash string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }

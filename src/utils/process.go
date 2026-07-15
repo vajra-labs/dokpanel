@@ -1,8 +1,8 @@
-package temp
+package utils
 
 import (
 	"crypto/rand"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -253,8 +253,6 @@ func processMounts(t *CompleteTemplate, variables map[string]string, schema Sche
 	}
 	return out
 }
-
-// ===== Internal helpers =====
 
 // extractInt extracts a number from a string using regex, with a default fallback.
 func extractInt(s, pattern string, defaultVal int) int {

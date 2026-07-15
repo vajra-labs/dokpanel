@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"goploy/src/utility/docker"
+	"goploy/src/pkg/docker"
 )
 
 // SetupDirectories creates all necessary directories.
