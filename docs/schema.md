@@ -12,10 +12,21 @@ Stores user permission groups for access control.
 CREATE TABLE groups (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL UNIQUE,
-	-- Unique group name (e.g. 'admin', 'devops')
+	-- is_system: 1 = ADMIN, MEMBER (locked, cannot edit/delete)
+	-- is_system: 0 = custom groups (owner can edit/delete)
+	is_system INTEGER NOT NULL DEFAULT 0,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER groups_updated_at
+AFTER UPDATE ON groups
+FOR EACH ROW
+BEGIN
+	UPDATE groups
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
 ### 2 policy Table
@@ -38,8 +49,8 @@ Links policy rules to permission groups (many-to-many relationship).
 ```sql
 CREATE TABLE group_policy (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	group_id INTEGER NOT NULL REFERENCES groups(id),
-	policy_id INTEGER NOT NULL REFERENCES policy(id),
+	group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+	policy_id INTEGER NOT NULL REFERENCES policy(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
 ```
@@ -55,8 +66,7 @@ CREATE TABLE users (
 	last_name TEXT,
 	first_name TEXT,
 	avatar TEXT NOT NULL,
-	-- User role: OWNER | ADMIN | MEMBER
-	role TEXT DEFAULT 'OWNER',
+	is_owner INTEGER DEFAULT 0,
 	about_me TEXT,
 	password TEXT NOT NULL,
 	is_email_verify INTEGER DEFAULT 0,
@@ -64,14 +74,59 @@ CREATE TABLE users (
 	two_factor_enable INTEGER DEFAULT 0,
 	is_registered INTEGER DEFAULT 0 NOT NULL,
 	added_by INTEGER DEFAULT NULL REFERENCES users(id),
-	group_id INTEGER NOT NULL REFERENCES groups(id),
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	CONSTRAINT role_check CHECK (role IN ('OWNER', 'ADMIN', 'MEMBER'))
+	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
+) STRICT;
+
+CREATE UNIQUE INDEX idx_single_owner ON users(is_owner) WHERE is_owner = 1;
+
+CREATE TRIGGER users_updated_at
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+	UPDATE users
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
+```
+
+### 5 user_policy Table
+
+Defines user policy rules (GRANT or DENY overrides) within a specific organization.
+
+```sql
+CREATE TABLE user_policy (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	org_id     INTEGER NOT NULL REFERENCES organization(id) ON DELETE CASCADE,
+	policy_id  INTEGER NOT NULL REFERENCES policy(id) ON DELETE CASCADE,
+	-- grant = extra permission add, deny = permission remove
+	effect     TEXT NOT NULL DEFAULT 'GRANT',
+	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
+	CONSTRAINT effect_check CHECK (effect IN ('GRANT', 'DENY')),
+	UNIQUE(user_id, org_id, policy_id)
 ) STRICT;
 ```
 
-### 5 two_factor Table
+### 6 resource_access Table
+
+Defines fine-grained user access permissions for specific resources (e.g., projects, servers, environments) within an organization.
+
+```sql
+CREATE TABLE resource_access (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	org_id  INTEGER REFERENCES organization(id) ON DELETE CASCADE,
+	resource_type TEXT,  --  "project", "server", "environment"
+	resource_id   INTEGER,
+	created_at INTEGER DEFAULT (strftime('%s', 'now')),
+	CONSTRAINT resource_type_check CHECK (
+		resource_type IN ('PROJECT', 'SERVER', 'ENVIRONMENT', 'SERVICE', 'GIT_PROVIDER')
+	)
+) STRICT;
+```
+
+### 7 two_factor Table
 
 Stores TOTP secret keys and backup recovery codes for user account multi-factor authentication.
 
@@ -84,7 +139,7 @@ CREATE TABLE two_factor (
 ) STRICT;
 ```
 
-### 6 jwt_tokens Table
+### 8 jwt_tokens Table
 
 Tracks active JWT tokens for user session blacklists and expirations.
 
@@ -92,19 +147,25 @@ Tracks active JWT tokens for user session blacklists and expirations.
 CREATE TABLE jwt_tokens (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	jti TEXT NOT NULL,
-	-- Role at time of token issuance: OWNER | ADMIN | MEMBER
-	role TEXT NOT NULL,
 	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	is_blacklist INTEGER DEFAULT 0,
 	blacklist_at INTEGER,
 	expired_at INTEGER,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	CONSTRAINT role_check CHECK (role IN ('OWNER', 'ADMIN', 'MEMBER'))
+	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER jwt_tokens_updated_at
+AFTER UPDATE ON jwt_tokens
+FOR EACH ROW
+BEGIN
+	UPDATE jwt_tokens
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 7 organization Table
+### 9 organization Table
 
 Stores tenant organizations hosting resources.
 
@@ -114,29 +175,46 @@ CREATE TABLE organization (
 	name TEXT NOT NULL UNIQUE,
 	logo TEXT,
 	slug TEXT NOT NULL UNIQUE,
-	owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER organization_updated_at
+AFTER UPDATE ON organization
+FOR EACH ROW
+BEGIN
+	UPDATE organization
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 8 organization_members Table
+### 10 organization_members Table
 
 Links users to organizations with specific memberships (many-to-many relationship).
 
 ```sql
 CREATE TABLE organization_members (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	role TEXT DEFAULT 'MEMBER',
+	group_id INTEGER NOT NULL REFERENCES groups(id),
 	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	organization_id INTEGER NOT NULL REFERENCES organization(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
-	updated_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
-	CONSTRAINT role_check CHECK (role IN ('ADMIN', 'MEMBER'))
+	updated_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER organization_members_updated_at
+AFTER UPDATE ON organization_members
+FOR EACH ROW
+BEGIN
+	UPDATE organization_members
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 9 organization_invites Table
+### 11 organization_invites Table
 
 Stores pending/accepted invites sent to new organization members.
 
@@ -144,7 +222,6 @@ Stores pending/accepted invites sent to new organization members.
 CREATE TABLE organization_invites (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	email TEXT NOT NULL,
-	role TEXT DEFAULT 'MEMBER',
 	status TEXT DEFAULT 'PENDING',
 	token TEXT NOT NULL UNIQUE,
 	group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -152,12 +229,11 @@ CREATE TABLE organization_invites (
 	invited_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	expired_at INTEGER NOT NULL,
 	created_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
-	CONSTRAINT role_check CHECK (role IN ('ADMIN', 'MEMBER')),
 	CONSTRAINT status_check CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED'))
 ) STRICT;
 ```
 
-### 10 projects Table
+### 12 projects Table
 
 Stores target projects encapsulating environments and services.
 
@@ -172,9 +248,18 @@ CREATE TABLE projects (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER projects_updated_at
+AFTER UPDATE ON projects
+FOR EACH ROW
+BEGIN
+	UPDATE projects
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 11 tags Table
+### 13 tags Table
 
 Stores project label tags.
 
@@ -189,7 +274,7 @@ CREATE TABLE tags (
 ) STRICT;
 ```
 
-### 12 project_tags Table
+### 14 project_tags Table
 
 Maps tags to projects (many-to-many relationship).
 
@@ -202,7 +287,7 @@ CREATE TABLE project_tags (
 ) STRICT;
 ```
 
-### 13 postgres_dbs Table
+### 15 postgres_dbs Table
 
 Defines managed PostgreSQL database services, resources, and replica settings.
 
@@ -244,9 +329,18 @@ CREATE TABLE postgres_dbs (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT pg_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR'))
 ) STRICT;
+
+CREATE TRIGGER pg_updated_at
+AFTER UPDATE ON postgres_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE postgres_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 14 mysql_dbs Table
+### 16 mysql_dbs Table
 
 Defines managed MySQL database services, including root password credentials.
 
@@ -288,9 +382,18 @@ CREATE TABLE mysql_dbs (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT mysql_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR'))
 ) STRICT;
+
+CREATE TRIGGER mysql_updated_at
+AFTER UPDATE ON mysql_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE mysql_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 15 mariadb_dbs Table
+### 17 mariadb_dbs Table
 
 Defines managed MariaDB database services.
 
@@ -332,9 +435,18 @@ CREATE TABLE mariadb_dbs (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT mariadb_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR'))
 ) STRICT;
+
+CREATE TRIGGER mariadb_updated_at
+AFTER UPDATE ON mariadb_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE mariadb_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 16 mongo_dbs Table
+### 18 mongo_dbs Table
 
 Defines managed MongoDB database services, including replica sets.
 
@@ -375,9 +487,18 @@ CREATE TABLE mongo_dbs (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT mongo_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR'))
 ) STRICT;
+
+CREATE TRIGGER mongo_updated_at
+AFTER UPDATE ON mongo_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE mongo_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 17 redis_dbs Table
+### 19 redis_dbs Table
 
 Defines managed Redis database cache services.
 
@@ -416,9 +537,18 @@ CREATE TABLE redis_dbs (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT redis_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR'))
 ) STRICT;
+
+CREATE TRIGGER redis_updated_at
+AFTER UPDATE ON redis_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE redis_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 18 libsql_dbs Table
+### 20 libsql_dbs Table
 
 Defines managed LibSQL (Turso core engine) instances, supporting replica nodes.
 
@@ -465,9 +595,18 @@ CREATE TABLE libsql_dbs (
 	CONSTRAINT libsql_status_check CHECK (app_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR')),
 	CONSTRAINT libsql_node_check CHECK (sqld_node IN ('PRIMARY', 'REPLICA'))
 ) STRICT;
+
+CREATE TRIGGER libsql_updated_at
+AFTER UPDATE ON libsql_dbs
+FOR EACH ROW
+BEGIN
+	UPDATE libsql_dbs
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 19 server_metrics Table
+### 21 server_metrics Table
 
 Stores time-series CPU, RAM, and Disk metric performance data for the host machine.
 
@@ -494,7 +633,7 @@ CREATE TABLE server_metrics (
 ) STRICT;
 ```
 
-### 20 container_metrics Table
+### 22 container_metrics Table
 
 Stores time-series Docker stats for individual application and database containers.
 
@@ -506,9 +645,13 @@ CREATE TABLE container_metrics (
 	container_name TEXT NOT NULL,
 	metrics_json TEXT NOT NULL
 ) STRICT;
+
+CREATE INDEX idx_container_metrics_timestamp ON container_metrics(timestamp);
+
+CREATE INDEX idx_container_metrics_name ON container_metrics(container_name);
 ```
 
-### 21 ssh_keys Table
+### 23 ssh_keys Table
 
 Stores securely encrypted SSH Private Keys used to provision remote build/deploy servers.
 
@@ -523,9 +666,18 @@ CREATE TABLE ssh_keys (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER ssh_keys_updated_at
+AFTER UPDATE ON ssh_keys
+FOR EACH ROW
+BEGIN
+	UPDATE ssh_keys
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 22 registries Table
+### 24 registries Table
 
 Configures container registry access credentials (e.g. Docker Hub, GHCR).
 
@@ -543,9 +695,18 @@ CREATE TABLE registries (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT registry_type_check CHECK (registry_type IN ('CLOUD', 'SELF_HOSTED'))
 ) STRICT;
+
+CREATE TRIGGER registries_updated_at
+AFTER UPDATE ON registries
+FOR EACH ROW
+BEGIN
+	UPDATE registries
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 23 environments Table
+### 25 environments Table
 
 Stores project sub-environments (e.g. 'production', 'staging').
 
@@ -560,9 +721,18 @@ CREATE TABLE environments (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER environments_updated_at
+AFTER UPDATE ON environments
+FOR EACH ROW
+BEGIN
+	UPDATE environments
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 24 servers Table
+### 26 servers Table
 
 Stores configurations for remote Docker servers.
 
@@ -590,9 +760,18 @@ CREATE TABLE servers (
 	CONSTRAINT server_status_check CHECK (server_status IN ('ACTIVE', 'INACTIVE')),
 	CONSTRAINT server_type_check CHECK (server_type IN ('DEPLOY', 'BUILD'))
 ) STRICT;
+
+CREATE TRIGGER servers_updated_at
+AFTER UPDATE ON servers
+FOR EACH ROW
+BEGIN
+	UPDATE servers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 25 git_providers Table
+### 27 git_providers Table
 
 Polymorphic umbrella table linking credentials for Git platforms (GitHub, GitLab, etc.).
 
@@ -610,9 +789,18 @@ CREATE TABLE git_providers (
 		provider_type IN ('GITHUB', 'GITLAB', 'GITEA', 'BITBUCKET')
 	)
 ) STRICT;
+
+CREATE TRIGGER git_providers_updated_at
+AFTER UPDATE ON git_providers
+FOR EACH ROW
+BEGIN
+	UPDATE git_providers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 26 github_providers Table
+### 28 github_providers Table
 
 Stores GitHub App Client IDs, Installation IDs, and Private Keys.
 
@@ -630,9 +818,18 @@ CREATE TABLE github_providers (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER github_providers_updated_at
+AFTER UPDATE ON github_providers
+FOR EACH ROW
+BEGIN
+	UPDATE github_providers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 27 gitlab_providers Table
+### 29 gitlab_providers Table
 
 Stores GitLab OAuth2 tokens and application IDs.
 
@@ -652,9 +849,18 @@ CREATE TABLE gitlab_providers (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER gitlab_providers_updated_at
+AFTER UPDATE ON gitlab_providers
+FOR EACH ROW
+BEGIN
+	UPDATE gitlab_providers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 28 gitea_providers Table
+### 30 gitea_providers Table
 
 Stores Gitea integration access details.
 
@@ -675,9 +881,18 @@ CREATE TABLE gitea_providers (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER gitea_providers_updated_at
+AFTER UPDATE ON gitea_providers
+FOR EACH ROW
+BEGIN
+	UPDATE gitea_providers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 29 bitbucket_providers Table
+### 31 bitbucket_providers Table
 
 Stores Bitbucket App password keys.
 
@@ -693,9 +908,18 @@ CREATE TABLE bitbucket_providers (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE TRIGGER bitbucket_providers_updated_at
+AFTER UPDATE ON bitbucket_providers
+FOR EACH ROW
+BEGIN
+	UPDATE bitbucket_providers
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 30 applications Table
+### 32 applications Table
 
 Configures applications, buildpacks (Nixpacks, Dockerfile), Git sources, environment variables, resource limits, and preview settings.
 
@@ -823,9 +1047,24 @@ CREATE TABLE applications (
 	CONSTRAINT app_trigger_type_check CHECK (trigger_type IN ('PUSH', 'TAG')),
 	CONSTRAINT app_preview_cert_check CHECK (preview_certificate_type IN ('LETSENCRYPT', 'NONE', 'CUSTOM'))
 ) STRICT;
+
+CREATE INDEX idx_applications_environment_id ON applications(environment_id);
+
+CREATE INDEX idx_applications_server_id ON applications(server_id);
+
+CREATE INDEX idx_applications_app_status ON applications(app_status);
+
+CREATE TRIGGER applications_updated_at
+AFTER UPDATE ON applications
+FOR EACH ROW
+BEGIN
+	UPDATE applications
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 31 compose_projects Table
+### 33 compose_projects Table
 
 Stores configuration settings for multi-container Docker Compose stacks.
 
@@ -896,9 +1135,22 @@ CREATE TABLE compose_projects (
 	CONSTRAINT compose_status_check CHECK (compose_status IN ('IDLE', 'RUNNING', 'DONE', 'ERROR')),
 	CONSTRAINT compose_trigger_type_check CHECK (trigger_type IN ('PUSH', 'TAG'))
 ) STRICT;
+
+CREATE INDEX idx_compose_projects_environment_id ON compose_projects(environment_id);
+
+CREATE INDEX idx_compose_projects_server_id ON compose_projects(server_id);
+
+CREATE TRIGGER compose_projects_updated_at
+AFTER UPDATE ON compose_projects
+FOR EACH ROW
+BEGIN
+	UPDATE compose_projects
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 32 domains Table
+### 34 domains Table
 
 Saves host domains mapped to apps or compose projects, with TLS resolver configurations.
 
@@ -928,9 +1180,24 @@ CREATE TABLE domains (
 	CONSTRAINT domain_cert_type_check CHECK (certificate_type IN ('LETSENCRYPT', 'NONE', 'CUSTOM')),
 	CONSTRAINT domain_type_check CHECK (domain_type IN ('APPLICATION', 'COMPOSE', 'PREVIEW'))
 ) STRICT;
+
+CREATE INDEX idx_domains_application_id ON domains(application_id);
+
+CREATE INDEX idx_domains_compose_id ON domains(compose_id);
+
+CREATE INDEX idx_domains_host ON domains(host);
+
+CREATE TRIGGER domains_updated_at
+AFTER UPDATE ON domains
+FOR EACH ROW
+BEGIN
+	UPDATE domains
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 33 patches Table
+### 35 patches Table
 
 Saves text files/patches applied to files inside the workspace directory during builds.
 
@@ -952,9 +1219,22 @@ CREATE TABLE patches (
 	UNIQUE(file_path, application_id),
 	UNIQUE(file_path, compose_id)
 ) STRICT;
+
+CREATE INDEX idx_patches_application_id ON patches(application_id);
+
+CREATE INDEX idx_patches_compose_id ON patches(compose_id);
+
+CREATE TRIGGER patches_updated_at
+AFTER UPDATE ON patches
+FOR EACH ROW
+BEGIN
+	UPDATE patches
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 34 deployments Table
+### 36 deployments Table
 
 Contains the execution logs and status metadata for individual container deployment history.
 
@@ -978,9 +1258,17 @@ CREATE TABLE deployments (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT deployment_status_check CHECK (status IN ('RUNNING', 'DONE', 'ERROR', 'CANCELLED'))
 ) STRICT;
+
+CREATE INDEX idx_deployments_status ON deployments(status);
+
+CREATE INDEX idx_deployments_created_at ON deployments(created_at);
+
+CREATE INDEX idx_deployments_compose_id ON deployments(compose_id);
+
+CREATE INDEX idx_deployments_application_id ON deployments(application_id);
 ```
 
-### 35 rollbacks Table
+### 37 rollbacks Table
 
 Saves context snapshots and image tags of past stable builds to allow 1-click manual registry rollback.
 
@@ -993,9 +1281,11 @@ CREATE TABLE rollbacks (
 	full_context TEXT, -- JSON snapshot of application configs
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE INDEX idx_rollbacks_deployment_id ON rollbacks(deployment_id);
 ```
 
-### 36 mounts Table
+### 38 mounts Table
 
 Saves bind directory paths, volume paths, or configuration files mounted to services.
 
@@ -1027,9 +1317,34 @@ CREATE TABLE mounts (
 		service_type IN ('APPLICATION', 'COMPOSE', 'POSTGRES', 'MYSQL', 'MARIADB', 'MONGO', 'REDIS', 'LIBSQL')
 	)
 ) STRICT;
+
+CREATE INDEX idx_mounts_application_id ON mounts(application_id);
+
+CREATE INDEX idx_mounts_compose_id ON mounts(compose_id);
+
+CREATE INDEX idx_mounts_postgres_id ON mounts(postgres_id);
+
+CREATE INDEX idx_mounts_mysql_id ON mounts(mysql_id);
+
+CREATE INDEX idx_mounts_mariadb_id ON mounts(mariadb_id);
+
+CREATE INDEX idx_mounts_mongo_id ON mounts(mongo_id);
+
+CREATE INDEX idx_mounts_redis_id ON mounts(redis_id);
+
+CREATE INDEX idx_mounts_libsql_id ON mounts(libsql_id);
+
+CREATE TRIGGER mounts_updated_at
+AFTER UPDATE ON mounts
+FOR EACH ROW
+BEGIN
+	UPDATE mounts
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 37 certificates Table
+### 39 certificates Table
 
 Saves manually uploaded SSL `.crt` and `.key` files.
 
@@ -1049,9 +1364,22 @@ CREATE TABLE certificates (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT auto_renew_check CHECK (auto_renew IN (0, 1))
 ) STRICT;
+
+CREATE INDEX idx_certificates_server_id ON certificates(server_id);
+
+CREATE INDEX idx_certificates_organization_id ON certificates(organization_id);
+
+CREATE TRIGGER certificates_updated_at
+AFTER UPDATE ON certificates
+FOR EACH ROW
+BEGIN
+	UPDATE certificates
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 38 destinations Table
+### 40 destinations Table
 
 Saves access credentials and configurations for S3-compatible remote storage backends.
 
@@ -1075,9 +1403,20 @@ CREATE TABLE destinations (
 	-- Constraints
 	CONSTRAINT destination_provider_check CHECK (provider IN ('S3', 'R2', 'BACKBLAZE', 'GCS', 'DO_SPACES'))
 ) STRICT;
+
+CREATE INDEX idx_destinations_organization_id ON destinations(organization_id);
+
+CREATE TRIGGER destinations_updated_at
+AFTER UPDATE ON destinations
+FOR EACH ROW
+BEGIN
+	UPDATE destinations
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 39 backups Table
+### 41 backups Table
 
 Configures cron-scheduled relational database logical dump backup tasks.
 
@@ -1115,9 +1454,36 @@ CREATE TABLE backups (
 	CONSTRAINT backup_type_check CHECK (backup_type IN ('DATABASE', 'COMPOSE')),
 	CONSTRAINT backup_db_type_check CHECK (database_type IN ('POSTGRES', 'MARIADB', 'MYSQL', 'MONGO', 'REDIS', 'LIBSQL'))
 ) STRICT;
+
+CREATE INDEX idx_backups_destination_id ON backups(destination_id);
+
+CREATE INDEX idx_backups_organization_id ON backups(organization_id);
+
+CREATE INDEX idx_backups_compose_id ON backups(compose_id);
+
+CREATE INDEX idx_backups_postgres_id ON backups(postgres_id);
+
+CREATE INDEX idx_backups_mysql_id ON backups(mysql_id);
+
+CREATE INDEX idx_backups_mariadb_id ON backups(mariadb_id);
+
+CREATE INDEX idx_backups_mongo_id ON backups(mongo_id);
+
+CREATE INDEX idx_backups_redis_id ON backups(redis_id);
+
+CREATE INDEX idx_backups_libsql_id ON backups(libsql_id);
+
+CREATE TRIGGER backups_updated_at
+AFTER UPDATE ON backups
+FOR EACH ROW
+BEGIN
+	UPDATE backups
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 40 volume_backups Table
+### 42 volume_backups Table
 
 Configures cron-scheduled raw Docker volume compression and S3 upload.
 
@@ -1152,9 +1518,26 @@ CREATE TABLE volume_backups (
 		service_type IN ('APPLICATION', 'COMPOSE', 'POSTGRES', 'MYSQL', 'MARIADB', 'MONGO', 'REDIS', 'LIBSQL')
 	)
 ) STRICT;
+
+CREATE INDEX idx_volume_backups_destination_id ON volume_backups(destination_id);
+
+CREATE INDEX idx_volume_backups_organization_id ON volume_backups(organization_id);
+
+CREATE INDEX idx_volume_backups_application_id ON volume_backups(application_id);
+
+CREATE INDEX idx_volume_backups_compose_id ON volume_backups(compose_id);
+
+CREATE TRIGGER volume_backups_updated_at
+AFTER UPDATE ON volume_backups
+FOR EACH ROW
+BEGIN
+	UPDATE volume_backups
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 41 notif_slack Table
+### 43 notif_slack Table
 
 Stores Slack Webhook configurations.
 
@@ -1166,7 +1549,7 @@ CREATE TABLE notif_slack (
 ) STRICT;
 ```
 
-### 42 notif_telegram Table
+### 44 notif_telegram Table
 
 Stores Telegram Bot configurations.
 
@@ -1179,7 +1562,7 @@ CREATE TABLE notif_telegram (
 ) STRICT;
 ```
 
-### 43 notif_discord Table
+### 45 notif_discord Table
 
 Stores Discord Webhook configurations.
 
@@ -1191,7 +1574,7 @@ CREATE TABLE notif_discord (
 ) STRICT;
 ```
 
-### 44 notif_email Table
+### 46 notif_email Table
 
 Stores SMTP mail server settings.
 
@@ -1207,7 +1590,7 @@ CREATE TABLE notif_email (
 ) STRICT;
 ```
 
-### 45 notif_resend Table
+### 47 notif_resend Table
 
 Stores Resend API service settings.
 
@@ -1220,7 +1603,7 @@ CREATE TABLE notif_resend (
 ) STRICT;
 ```
 
-### 46 notif_gotify Table
+### 48 notif_gotify Table
 
 Stores Gotify server access settings.
 
@@ -1234,7 +1617,7 @@ CREATE TABLE notif_gotify (
 ) STRICT;
 ```
 
-### 47 notif_ntfy Table
+### 49 notif_ntfy Table
 
 Stores Ntfy server access settings.
 
@@ -1248,7 +1631,7 @@ CREATE TABLE notif_ntfy (
 ) STRICT;
 ```
 
-### 48 notif_mattermost Table
+### 50 notif_mattermost Table
 
 Stores Mattermost integration settings.
 
@@ -1261,7 +1644,7 @@ CREATE TABLE notif_mattermost (
 ) STRICT;
 ```
 
-### 49 notif_teams Table
+### 51 notif_teams Table
 
 Stores Microsoft Teams Webhook settings.
 
@@ -1272,7 +1655,7 @@ CREATE TABLE notif_teams (
 ) STRICT;
 ```
 
-### 50 notif_lark Table
+### 52 notif_lark Table
 
 Stores Lark Webhook integration settings.
 
@@ -1283,7 +1666,7 @@ CREATE TABLE notif_lark (
 ) STRICT;
 ```
 
-### 51 notif_pushover Table
+### 53 notif_pushover Table
 
 Stores Pushover mobile application alerts settings.
 
@@ -1298,7 +1681,7 @@ CREATE TABLE notif_pushover (
 ) STRICT;
 ```
 
-### 52 notif_custom Table
+### 54 notif_custom Table
 
 Stores Custom HTTP webhook endpoints and custom headers JSON.
 
@@ -1310,7 +1693,7 @@ CREATE TABLE notif_custom (
 ) STRICT;
 ```
 
-### 53 notifications Table
+### 55 notifications Table
 
 Tracks active notification triggers for system events (app deploy, build error, db backup) and maps them to channel sub-tables.
 
@@ -1347,9 +1730,20 @@ CREATE TABLE notifications (
 		notification_type IN ('SLACK', 'TELEGRAM', 'DISCORD', 'EMAIL', 'RESEND', 'GOTIFY', 'NTFY', 'MATTERMOST', 'PUSHOVER', 'CUSTOM', 'LARK', 'TEAMS')
 	)
 ) STRICT;
+
+CREATE INDEX idx_notifications_organization_id ON notifications(organization_id);
+
+CREATE TRIGGER notifications_updated_at
+AFTER UPDATE ON notifications
+FOR EACH ROW
+BEGIN
+	UPDATE notifications
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 54 schedules Table
+### 56 schedules Table
 
 Schedules automated tasks (bash or sh commands) to run inside containers or on the host.
 
@@ -1379,9 +1773,26 @@ CREATE TABLE schedules (
 	CONSTRAINT schedule_shell_type_check CHECK (shell_type IN ('BASH', 'SH')),
 	CONSTRAINT schedule_type_check CHECK (schedule_type IN ('APPLICATION', 'COMPOSE', 'SERVER', 'Goploy-SERVER'))
 ) STRICT;
+
+CREATE INDEX idx_schedules_application_id ON schedules(application_id);
+
+CREATE INDEX idx_schedules_compose_id ON schedules(compose_id);
+
+CREATE INDEX idx_schedules_server_id ON schedules(server_id);
+
+CREATE INDEX idx_schedules_organization_id ON schedules(organization_id);
+
+CREATE TRIGGER schedules_updated_at
+AFTER UPDATE ON schedules
+FOR EACH ROW
+BEGIN
+	UPDATE schedules
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 55 redirects Table
+### 57 redirects Table
 
 Saves custom Traefik redirection middleware matching rules (regex and replacements).
 
@@ -1394,13 +1805,22 @@ CREATE TABLE redirects (
 	unique_config_key INTEGER,
 	application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	-- Constraints
-	CONSTRAINT redirect_permanent_check CHECK (permanent IN (0, 1))
+	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE INDEX idx_redirects_application_id ON redirects(application_id);
+
+CREATE TRIGGER redirects_updated_at
+AFTER UPDATE ON redirects
+FOR EACH ROW
+BEGIN
+	UPDATE redirects
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 56 ports Table
+### 58 ports Table
 
 Defines host-published-to-container-target port mapping configurations.
 
@@ -1415,13 +1835,14 @@ CREATE TABLE ports (
 	publish_mode TEXT NOT NULL DEFAULT 'HOST',
 	application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	-- Constraints
 	CONSTRAINT port_protocol_check CHECK (protocol IN ('TCP', 'UDP')),
 	CONSTRAINT port_publish_mode_check CHECK (publish_mode IN ('INGRESS', 'HOST'))
 ) STRICT;
+
+CREATE INDEX idx_ports_application_id ON ports(application_id);
 ```
 
-### 57 security Table
+### 59 security Table
 
 Saves HTTP Basic authentication username and password credentials per application router.
 
@@ -1434,9 +1855,11 @@ CREATE TABLE security (
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	UNIQUE(username, application_id)
 ) STRICT;
+
+CREATE INDEX idx_security_application_id ON security(application_id);
 ```
 
-### 58 audit_logs Table
+### 60 audit_logs Table
 
 Tracks user action trails and resource updates for security monitoring.
 
@@ -1450,16 +1873,20 @@ CREATE TABLE audit_logs (
 	resource_id TEXT,
 	resource_name TEXT,
 	metadata TEXT, -- Extra info / JSON string
+	-- Foreign keys
 	organization_id INTEGER REFERENCES organization(id) ON DELETE SET NULL,
 	user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
-	-- Constraints
-	CONSTRAINT audit_action_check CHECK (action IN ('CREATE', 'UPDATE', 'DELETE', 'DEPLOY', 'CANCEL', 'REDEPLOY', 'LOGIN', 'LOGOUT', 'RESTORE', 'RUN', 'START', 'STOP', 'RELOAD', 'REBUILD', 'MOVE')),
-	CONSTRAINT audit_resource_type_check CHECK (resource_type IN ('PROJECT', 'SERVICE', 'ENVIRONMENT', 'DEPLOYMENT', 'USER', 'CUSTOMROLE', 'DOMAIN', 'CERTIFICATE', 'REGISTRY', 'SERVER', 'SSHKEY', 'GITPROVIDER', 'DESTINATION', 'NOTIFICATION', 'SETTINGS', 'SESSION', 'PORT', 'REDIRECT', 'SECURITY', 'SCHEDULE', 'BACKUP', 'VOLUMEBACKUP', 'DOCKER', 'SWARM', 'PREVIEWDEPLOYMENT', 'ORGANIZATION', 'CLUSTER', 'MOUNT', 'APPLICATION', 'COMPOSE'))
+	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL
 ) STRICT;
+
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+
+CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
+
+CREATE INDEX idx_audit_logs_organization_id ON audit_logs(organization_id);
 ```
 
-### 59 settings Table
+### 61 settings Table
 
 Configures global dashboard server configurations (Traefik resolvers, docker cleanup tasks, SSL domains).
 
@@ -1481,9 +1908,18 @@ CREATE TABLE settings (
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT settings_certificate_check CHECK (certificate_type IN ('NONE', 'LETSENCRYPT', 'CUSTOM'))
 ) STRICT;
+
+CREATE TRIGGER settings_updated_at
+AFTER UPDATE ON settings
+FOR EACH ROW
+BEGIN
+	UPDATE settings
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```
 
-### 60 ai_settings Table
+### 62 ai_settings Table
 
 Stores API key configuration keys and OpenAI-compatible endpoints to generate composing stack configs.
 
@@ -1495,9 +1931,21 @@ CREATE TABLE ai_settings (
 	api_key TEXT NOT NULL,
 	model TEXT NOT NULL,
 	is_enabled INTEGER NOT NULL DEFAULT 1,
+	-- Foreign keys
 	organization_id INTEGER NOT NULL REFERENCES organization(id) ON DELETE CASCADE,
 	created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	updated_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
 	CONSTRAINT ai_enabled_check CHECK (is_enabled IN (0, 1))
 ) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_ai_settings_organization_id ON ai_settings(organization_id);
+
+CREATE TRIGGER ai_settings_updated_at
+AFTER UPDATE ON ai_settings
+FOR EACH ROW
+BEGIN
+	UPDATE ai_settings
+	SET updated_at = strftime('%s', 'now')
+	WHERE id = OLD.id;
+END;
 ```

@@ -58,8 +58,8 @@ func main() {
 	app := fx.New(
 		FxLogger,
 		conf.Module,
-		db.Module,
 		core.Module,
+		db.Module,
 		apis.Module,
 		pkg.Module,
 		service.Module,

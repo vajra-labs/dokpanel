@@ -10,7 +10,11 @@ import (
 )
 
 // GetRemoteDocker returns a Docker client tunneled over SSH.
-func GetRemoteDocker(ctx context.Context, pool *shell.SSHPool, serverId int64) (*client.Client, error) {
+func GetRemoteDocker(
+	ctx context.Context,
+	pool *shell.SSHPool,
+	serverId int64,
+) (*client.Client, error) {
 	sc, err := pool.Get(ctx, serverId)
 	if err != nil {
 		return nil, err

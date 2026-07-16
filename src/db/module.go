@@ -1,6 +1,8 @@
 package db
 
 import (
+	"goploy/src/db/seeds"
+
 	"go.uber.org/fx"
 )
 
@@ -8,4 +10,5 @@ import (
 var Module = fx.Module(
 	"database",
 	fx.Provide(providerPool, provideQueries),
+	fx.Invoke(seeds.SeedGroup),
 )

@@ -15,7 +15,6 @@ import (
 // createOptions holds options for creating a token.
 type createOptions struct {
 	userID    int64
-	role      string
 	tokenType types.TOKEN
 	exp       time.Duration
 	save      bool
@@ -41,7 +40,11 @@ type TokenService struct {
 }
 
 // NewTokenService creates a new TokenService instance.
-func NewTokenService(cfg *conf.Config, jwtToken *jwt.JwtToken, queries *repos.Queries) *TokenService {
+func NewTokenService(
+	cfg *conf.Config,
+	jwtToken *jwt.JwtToken,
+	queries *repos.Queries,
+) *TokenService {
 	return &TokenService{cfg: cfg, jwt: jwtToken, queries: queries}
 }
 
@@ -59,7 +62,6 @@ func (s *TokenService) Create(ctx context.Context, opts createOptions) (*Created
 		expiredAt := time.Now().Add(opts.exp).Unix()
 		_, err = s.queries.CreateJwtToken(ctx, repos.CreateJwtTokenParams{
 			Jti:       payload.ID,
-			Role:      opts.role,
 			UserID:    opts.userID,
 			ExpiredAt: &expiredAt,
 		})
@@ -75,10 +77,13 @@ func (s *TokenService) Create(ctx context.Context, opts createOptions) (*Created
 }
 
 // Generate creates a new access + refresh token pair for the given user.
-func (s *TokenService) Generate(ctx context.Context, userID int64, role string) (*AuthTokens, error) {
+func (s *TokenService) Generate(
+	ctx context.Context,
+	userID int64,
+	role string,
+) (*AuthTokens, error) {
 	access, err := s.Create(ctx, createOptions{
 		userID:    userID,
-		role:      role,
 		tokenType: types.ACC_TOKEN,
 		exp:       s.cfg.JWT_ACCESS_EXP,
 		save:      false,
@@ -89,7 +94,6 @@ func (s *TokenService) Generate(ctx context.Context, userID int64, role string) 
 
 	refresh, err := s.Create(ctx, createOptions{
 		userID:    userID,
-		role:      role,
 		tokenType: types.REF_TOKEN,
 		exp:       s.cfg.JWT_REFRESH_EXP,
 		save:      true,
@@ -115,7 +119,11 @@ func (s *TokenService) Verify(tokenStr string, tokenType types.TOKEN) (*jwt.Payl
 
 // AddBlacklist blacklists a refresh token. If many is true, all tokens for
 // that user are blacklisted (e.g. on logout-all / password change).
-func (s *TokenService) AddBlacklist(ctx context.Context, tokenStr string, many bool) (string, error) {
+func (s *TokenService) AddBlacklist(
+	ctx context.Context,
+	tokenStr string,
+	many bool,
+) (string, error) {
 	payload, err := s.Verify(tokenStr, types.REF_TOKEN)
 	if err != nil {
 		return "", err
@@ -131,7 +139,10 @@ func (s *TokenService) AddBlacklist(ctx context.Context, tokenStr string, many b
 
 	isBlacklisted := record.IsBlacklist != nil && *record.IsBlacklist == 1
 	if isBlacklisted {
-		return "", throw.BadRequestError("Token is already blacklisted", "TOKEN_ALREADY_BLACKLISTED")
+		return "", throw.BadRequestError(
+			"Token is already blacklisted",
+			"TOKEN_ALREADY_BLACKLISTED",
+		)
 	}
 
 	now := time.Now().Unix()
@@ -165,7 +176,11 @@ func (s *TokenService) AddBlacklist(ctx context.Context, tokenStr string, many b
 }
 
 // RefreshAccess issues a new access token using a valid, non-blacklisted refresh token.
-func (s *TokenService) RefreshAccess(ctx context.Context, refreshToken string, role string) (*CreatedToken, error) {
+func (s *TokenService) RefreshAccess(
+	ctx context.Context,
+	refreshToken string,
+	role string,
+) (*CreatedToken, error) {
 	payload, err := s.Verify(refreshToken, types.REF_TOKEN)
 	if err != nil {
 		return nil, err
@@ -190,7 +205,6 @@ func (s *TokenService) RefreshAccess(ctx context.Context, refreshToken string, r
 
 	return s.Create(ctx, createOptions{
 		userID:    userID,
-		role:      role,
 		tokenType: types.ACC_TOKEN,
 		exp:       s.cfg.JWT_ACCESS_EXP,
 		save:      false,

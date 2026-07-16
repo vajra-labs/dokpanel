@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"goploy/src/conf"
 	"goploy/src/core"
 	"goploy/src/db"
+	"goploy/src/db/repos"
 	"goploy/src/pkg"
 	"goploy/src/service"
 
@@ -16,20 +18,26 @@ import (
 	"go.uber.org/fx"
 )
 
-var App *fiber.App
+var (
+	App     *fiber.App
+	DBConn  *sql.DB
+	Queries *repos.Queries
+)
 
 func TestMain(m *testing.M) {
 	var fiberApp *fiber.App
+	var dbConn *sql.DB
+	var queries *repos.Queries
 
 	fxApp := fx.New(
 		fx.NopLogger,
 		conf.Module,
-		db.Module,
 		core.Module,
+		db.Module,
 		apis.Module,
 		pkg.Module,
 		service.Module,
-		fx.Populate(&fiberApp),
+		fx.Populate(&fiberApp, &dbConn, &queries),
 	)
 
 	ctx := context.Background()
@@ -38,6 +46,8 @@ func TestMain(m *testing.M) {
 	}
 
 	App = fiberApp
+	DBConn = dbConn
+	Queries = queries
 	code := m.Run()
 
 	_ = fxApp.Stop(ctx)

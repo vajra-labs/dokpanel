@@ -28,9 +28,12 @@ func provideOpenAPI(cfg *conf.Config) huma.API {
 		OpenAPI: &huma.OpenAPI{
 			OpenAPI: "3.1.0",
 			Info: &huma.Info{
-				Title:       fmt.Sprintf("%s API", cfg.NAME),
-				Version:     conf.VERSION,
-				Description: fmt.Sprintf("Complete API documentation for %s - manage applications, databases, and orchestrate your infrastructure.", cfg.NAME),
+				Title:   fmt.Sprintf("%s API", cfg.NAME),
+				Version: conf.VERSION,
+				Description: fmt.Sprintf(
+					"Complete API documentation for %s - manage applications, databases, and orchestrate your infrastructure.",
+					cfg.NAME,
+				),
 				Contact: &huma.Contact{
 					Name: fmt.Sprintf("%s Team", cfg.NAME),
 					URL:  "https://goploy.com",
@@ -51,10 +54,13 @@ func provideOpenAPI(cfg *conf.Config) huma.API {
 	// Security schemes
 	r.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
 		"apiKey": {
-			Type:        "apiKey",
-			In:          "header",
-			Name:        "x-api-key",
-			Description: fmt.Sprintf("API key authentication. Generate an API key from your %s dashboard under Settings > API Keys.", cfg.NAME),
+			Type: "apiKey",
+			In:   "header",
+			Name: "x-api-key",
+			Description: fmt.Sprintf(
+				"API key authentication. Generate an API key from your %s dashboard under Settings > API Keys.",
+				cfg.NAME,
+			),
 		},
 	}
 

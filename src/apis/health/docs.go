@@ -45,7 +45,12 @@ func registerOpenApi(api huma.API) {
 			Summary:     "Health Check",
 			Description: "Provides detailed information about server health and runtime status",
 			Responses: apidoc.Responses(
-				apidoc.JsonContent(api, http.StatusOK, HealthRes{}, "Returns server uptime, environment, version, timestamp, and memory usage"),
+				apidoc.JsonContent(
+					api,
+					http.StatusOK,
+					HealthRes{},
+					"Returns server uptime, environment, version, timestamp, and memory usage",
+				),
 				apidoc.ErrContent(http.StatusInternalServerError, "Internal server error"),
 			),
 		},

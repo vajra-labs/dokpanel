@@ -85,9 +85,12 @@ tasks:
     preconditions:
       - sh: command -v gofumpt
         msg: "gofumpt not found. Install with: go install mvdan.cc/gofumpt@latest"
+      - sh: command -v golines
+        msg: "goline not found. Install with: go install github.com/golangci/golines@latest"
     cmds:
       - go fmt ./...
       - gofumpt -l -w .
+      - golines -w .
 
   # Dependencies
   mod:deps:

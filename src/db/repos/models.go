@@ -359,6 +359,7 @@ type GitlabProvider struct {
 type Group struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
+	IsSystem  int64  `json:"is_system"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`
 }
@@ -373,7 +374,6 @@ type GroupPolicy struct {
 type JwtToken struct {
 	ID          int64  `json:"id"`
 	Jti         string `json:"jti"`
-	Role        string `json:"role"`
 	UserID      int64  `json:"user_id"`
 	IsBlacklist *int64 `json:"is_blacklist"`
 	BlacklistAt *int64 `json:"blacklist_at"`
@@ -670,7 +670,7 @@ type Organization struct {
 	Name      string  `json:"name"`
 	Logo      *string `json:"logo"`
 	Slug      string  `json:"slug"`
-	OwnerID   int64   `json:"owner_id"`
+	UserID    int64   `json:"user_id"`
 	CreatedAt int64   `json:"created_at"`
 	UpdatedAt int64   `json:"updated_at"`
 }
@@ -678,7 +678,6 @@ type Organization struct {
 type OrganizationInvite struct {
 	ID             int64   `json:"id"`
 	Email          string  `json:"email"`
-	Role           *string `json:"role"`
 	Status         *string `json:"status"`
 	Token          string  `json:"token"`
 	GroupID        int64   `json:"group_id"`
@@ -689,12 +688,12 @@ type OrganizationInvite struct {
 }
 
 type OrganizationMember struct {
-	ID             int64   `json:"id"`
-	Role           *string `json:"role"`
-	UserID         int64   `json:"user_id"`
-	OrganizationID int64   `json:"organization_id"`
-	CreatedAt      int64   `json:"created_at"`
-	UpdatedAt      int64   `json:"updated_at"`
+	ID             int64 `json:"id"`
+	GroupID        int64 `json:"group_id"`
+	UserID         int64 `json:"user_id"`
+	OrganizationID int64 `json:"organization_id"`
+	CreatedAt      int64 `json:"created_at"`
+	UpdatedAt      int64 `json:"updated_at"`
 }
 
 type Patch struct {
@@ -834,6 +833,15 @@ type Registry struct {
 	UpdatedAt    int64   `json:"updated_at"`
 }
 
+type ResourceAccess struct {
+	ID           int64   `json:"id"`
+	UserID       *int64  `json:"user_id"`
+	OrgID        *int64  `json:"org_id"`
+	ResourceType *string `json:"resource_type"`
+	ResourceID   *int64  `json:"resource_id"`
+	CreatedAt    *int64  `json:"created_at"`
+}
+
 type Rollback struct {
 	ID           int64   `json:"id"`
 	DeploymentID int64   `json:"deployment_id"`
@@ -959,7 +967,7 @@ type User struct {
 	LastName        *string `json:"last_name"`
 	FirstName       *string `json:"first_name"`
 	Avatar          string  `json:"avatar"`
-	Role            *string `json:"role"`
+	IsOwner         *int64  `json:"is_owner"`
 	AboutMe         *string `json:"about_me"`
 	Password        string  `json:"password"`
 	IsEmailVerify   *int64  `json:"is_email_verify"`
@@ -967,9 +975,17 @@ type User struct {
 	TwoFactorEnable *int64  `json:"two_factor_enable"`
 	IsRegistered    int64   `json:"is_registered"`
 	AddedBy         *int64  `json:"added_by"`
-	GroupID         int64   `json:"group_id"`
 	CreatedAt       int64   `json:"created_at"`
 	UpdatedAt       int64   `json:"updated_at"`
+}
+
+type UserPolicy struct {
+	ID        int64  `json:"id"`
+	UserID    int64  `json:"user_id"`
+	OrgID     int64  `json:"org_id"`
+	PolicyID  int64  `json:"policy_id"`
+	Effect    string `json:"effect"`
+	CreatedAt int64  `json:"created_at"`
 }
 
 type VolumeBackup struct {

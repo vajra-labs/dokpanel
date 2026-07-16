@@ -48,7 +48,10 @@ func newClient(cfg *conf.Config) *client.Client {
 		}
 		c, err := client.New(opts...)
 		if err != nil {
-			log.Warn().Str("socket", socketPath).Err(err).Msg("Docker client init failed, trying next")
+			log.Warn().
+				Str("socket", socketPath).
+				Err(err).
+				Msg("Docker client init failed, trying next")
 			continue
 		}
 		return c

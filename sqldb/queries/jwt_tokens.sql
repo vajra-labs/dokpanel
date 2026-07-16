@@ -1,6 +1,6 @@
 -- name: CreateJwtToken :one
-INSERT INTO jwt_tokens (jti, role, user_id, is_blacklist, expired_at)
-VALUES (?, ?, ?, 0, ?)
+INSERT INTO jwt_tokens (jti, user_id, is_blacklist, expired_at)
+VALUES (?, ?, 0, ?)
 RETURNING *;
 
 -- name: GetJwtTokenByJti :one

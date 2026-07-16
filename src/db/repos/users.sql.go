@@ -10,7 +10,7 @@ import (
 )
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, last_name, first_name, avatar, role, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, group_id, created_at, updated_at FROM users WHERE id = ?
+SELECT id, email, last_name, first_name, avatar, is_owner, about_me, password, is_email_verify, email_verify_at, two_factor_enable, is_registered, added_by, created_at, updated_at FROM users WHERE id = ?
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
@@ -22,7 +22,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.LastName,
 		&i.FirstName,
 		&i.Avatar,
-		&i.Role,
+		&i.IsOwner,
 		&i.AboutMe,
 		&i.Password,
 		&i.IsEmailVerify,
@@ -30,7 +30,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.TwoFactorEnable,
 		&i.IsRegistered,
 		&i.AddedBy,
-		&i.GroupID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

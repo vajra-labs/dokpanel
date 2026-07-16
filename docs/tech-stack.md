@@ -17,7 +17,7 @@ Goploy is a lightweight, single-server, self-hosted deployment dashboard designe
 ### 1.2 Backend (Server)
 
 - **Framework**: Fiber v3 (`github.com/gofiber/fiber/v3`)
-- **Language**: Go (Golang) 1.26.3
+- **Language**: Go (Golang) 1.27
 - **Dependency Injection**: Uber Fx (`go.uber.org/fx`)
 - **JSON & Utilities**: `dustin/go-humanize`
 - **Environment Loader**: `joho/godotenv`
@@ -26,7 +26,7 @@ Goploy is a lightweight, single-server, self-hosted deployment dashboard designe
 
 - **Spec Generation**: Huma v2 (`github.com/danielgtaylor/huma/v2`) — generates OpenAPI 3.1 spec from Go structs
 - **UI Renderer**: go-scalar-api-reference (`github.com/MarceloPetrucio/go-scalar-api-reference`) — Scalar UI at `/api/docs`
-- **Code Quality**: golangci-lint v2 + gofumpt for linting and formatting
+- **Code Quality**: golangci-lint v2 + gofumpt & golines for linting and formatting
 
 ### 1.3 Database & Query Layer
 

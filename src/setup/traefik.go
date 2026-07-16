@@ -120,13 +120,25 @@ func writeTraefikConfig(cfg *conf.Config, p *docker.AppPaths) error {
 		DokpanelRule: fmt.Sprintf("Host(`%s.docker.localhost`) && PathPrefix(`/`)", appName),
 	}
 
-	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_PATH, "traefik.yml"), traefikYMLTemplate, &data); err != nil {
+	if err := writeTemplateFile(
+		filepath.Join(p.TRAEFIK_PATH, "traefik.yml"),
+		traefikYMLTemplate,
+		&data,
+	); err != nil {
 		return fmt.Errorf("write traefik.yml: %w", err)
 	}
-	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, "middlewares.yml"), middlewaresYMLTemplate, &data); err != nil {
+	if err := writeTemplateFile(
+		filepath.Join(p.TRAEFIK_DYN_PATH, "middlewares.yml"),
+		middlewaresYMLTemplate,
+		&data,
+	); err != nil {
 		return fmt.Errorf("write middlewares.yml: %w", err)
 	}
-	if err := writeTemplateFile(filepath.Join(p.TRAEFIK_DYN_PATH, appName+".yml"), goployYMLTemplate, &data); err != nil {
+	if err := writeTemplateFile(
+		filepath.Join(p.TRAEFIK_DYN_PATH, appName+".yml"),
+		goployYMLTemplate,
+		&data,
+	); err != nil {
 		return fmt.Errorf("write %s.yml: %w", appName, err)
 	}
 
@@ -171,7 +183,12 @@ func writeTemplateFile(filePath, tmplContent string, data *TraefikTemplateData) 
 }
 
 // SetupTraefik pulls the Traefik image and starts the container.
-func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *docker.AppPaths) error {
+func setupTraefik(
+	ctx context.Context,
+	c *client.Client,
+	cfg *conf.Config,
+	p *docker.AppPaths,
+) error {
 	fmt.Printf("Pulling Traefik image: %s\n", traefikImage)
 	rc, err := c.ImagePull(ctx, traefikImage, client.ImagePullOptions{})
 	if err != nil {
@@ -186,8 +203,16 @@ func setupTraefik(ctx context.Context, c *client.Client, cfg *conf.Config, p *do
 	if err == nil {
 		fmt.Println("Removing existing Traefik container...")
 		stopTimeout := 15
-		_, _ = c.ContainerStop(ctx, existing.Container.ID, client.ContainerStopOptions{Timeout: &stopTimeout})
-		_, _ = c.ContainerRemove(ctx, existing.Container.ID, client.ContainerRemoveOptions{Force: true})
+		_, _ = c.ContainerStop(
+			ctx,
+			existing.Container.ID,
+			client.ContainerStopOptions{Timeout: &stopTimeout},
+		)
+		_, _ = c.ContainerRemove(
+			ctx,
+			existing.Container.ID,
+			client.ContainerRemoveOptions{Force: true},
+		)
 		time.Sleep(3 * time.Second)
 	}
 
@@ -247,8 +272,16 @@ func teardownTraefik(ctx context.Context, c *client.Client) error {
 	}
 
 	stopTimeout := 10
-	_, _ = c.ContainerStop(ctx, existing.Container.ID, client.ContainerStopOptions{Timeout: &stopTimeout})
-	if _, err := c.ContainerRemove(ctx, existing.Container.ID, client.ContainerRemoveOptions{Force: true}); err != nil {
+	_, _ = c.ContainerStop(
+		ctx,
+		existing.Container.ID,
+		client.ContainerStopOptions{Timeout: &stopTimeout},
+	)
+	if _, err := c.ContainerRemove(
+		ctx,
+		existing.Container.ID,
+		client.ContainerRemoveOptions{Force: true},
+	); err != nil {
 		return err
 	}
 

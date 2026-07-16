@@ -3,6 +3,7 @@
 CREATE TABLE `groups` (
   `id` integer NULL PRIMARY KEY AUTOINCREMENT,
   `name` text NOT NULL,
+  `is_system` integer NOT NULL DEFAULT 0,
   `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
   `updated_at` integer NOT NULL DEFAULT (strftime('%s', 'now'))
 ) STRICT;
@@ -30,8 +31,8 @@ CREATE TABLE `group_policy` (
   `group_id` integer NOT NULL,
   `policy_id` integer NOT NULL,
   `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
-  CONSTRAINT `0` FOREIGN KEY (`policy_id`) REFERENCES `policy` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+  CONSTRAINT `0` FOREIGN KEY (`policy_id`) REFERENCES `policy` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) STRICT;
 -- create "users" table
 CREATE TABLE `users` (
@@ -40,7 +41,7 @@ CREATE TABLE `users` (
   `last_name` text NULL,
   `first_name` text NULL,
   `avatar` text NOT NULL,
-  `role` text NULL DEFAULT 'OWNER',
+  `is_owner` integer NULL DEFAULT 0,
   `about_me` text NULL,
   `password` text NOT NULL,
   `is_email_verify` integer NULL DEFAULT 0,
@@ -48,15 +49,14 @@ CREATE TABLE `users` (
   `two_factor_enable` integer NULL DEFAULT 0,
   `is_registered` integer NOT NULL DEFAULT 0,
   `added_by` integer NULL DEFAULT (NULL),
-  `group_id` integer NOT NULL,
   `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
   `updated_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
-  CONSTRAINT `0` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `1` FOREIGN KEY (`added_by`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `role_check` CHECK (role IN ('OWNER', 'ADMIN', 'MEMBER'))
+  CONSTRAINT `0` FOREIGN KEY (`added_by`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) STRICT;
 -- create index "users_email" to table: "users"
 CREATE UNIQUE INDEX `users_email` ON `users` (`email`);
+-- create index "idx_single_owner" to table: "users"
+CREATE UNIQUE INDEX `idx_single_owner` ON `users` (`is_owner`) WHERE is_owner = 1;
 -- create trigger "users_updated_at"
 -- +goose StatementBegin
 CREATE TRIGGER `users_updated_at` AFTER UPDATE ON `users` FOR EACH ROW BEGIN
@@ -65,6 +65,35 @@ CREATE TRIGGER `users_updated_at` AFTER UPDATE ON `users` FOR EACH ROW BEGIN
 	WHERE id = OLD.id;
 END;
 -- +goose StatementEnd
+-- create "user_policy" table
+CREATE TABLE `user_policy` (
+  `id` integer NULL PRIMARY KEY AUTOINCREMENT,
+  `user_id` integer NOT NULL,
+  `org_id` integer NOT NULL,
+  `policy_id` integer NOT NULL,
+  `effect` text NOT NULL DEFAULT 'GRANT',
+  `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
+  CONSTRAINT `0` FOREIGN KEY (`policy_id`) REFERENCES `policy` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `1` FOREIGN KEY (`org_id`) REFERENCES `organization` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `effect_check` CHECK (effect IN ('GRANT', 'DENY'))
+) STRICT;
+-- create index "user_policy_user_id_org_id_policy_id" to table: "user_policy"
+CREATE UNIQUE INDEX `user_policy_user_id_org_id_policy_id` ON `user_policy` (`user_id`, `org_id`, `policy_id`);
+-- create "resource_access" table
+CREATE TABLE `resource_access` (
+  `id` integer NULL PRIMARY KEY AUTOINCREMENT,
+  `user_id` integer NULL,
+  `org_id` integer NULL,
+  `resource_type` text NULL,
+  `resource_id` integer NULL,
+  `created_at` integer NULL DEFAULT (strftime('%s', 'now')),
+  CONSTRAINT `0` FOREIGN KEY (`org_id`) REFERENCES `organization` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT `resource_type_check` CHECK (
+		resource_type IN ('PROJECT', 'SERVER', 'ENVIRONMENT', 'SERVICE', 'GIT_PROVIDER')
+	)
+) STRICT;
 -- create "two_factor" table
 CREATE TABLE `two_factor` (
   `id` integer NULL PRIMARY KEY AUTOINCREMENT,
@@ -77,15 +106,13 @@ CREATE TABLE `two_factor` (
 CREATE TABLE `jwt_tokens` (
   `id` integer NULL PRIMARY KEY AUTOINCREMENT,
   `jti` text NOT NULL,
-  `role` text NOT NULL,
   `user_id` integer NOT NULL,
   `is_blacklist` integer NULL DEFAULT 0,
   `blacklist_at` integer NULL,
   `expired_at` integer NULL,
   `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
   `updated_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
-  CONSTRAINT `0` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT `role_check` CHECK (role IN ('OWNER', 'ADMIN', 'MEMBER'))
+  CONSTRAINT `0` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) STRICT;
 -- create trigger "jwt_tokens_updated_at"
 -- +goose StatementBegin
@@ -101,10 +128,10 @@ CREATE TABLE `organization` (
   `name` text NOT NULL,
   `logo` text NULL,
   `slug` text NOT NULL,
-  `owner_id` integer NOT NULL,
+  `user_id` integer NOT NULL,
   `created_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
   `updated_at` integer NOT NULL DEFAULT (strftime('%s', 'now')),
-  CONSTRAINT `0` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+  CONSTRAINT `0` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) STRICT;
 -- create index "organization_name" to table: "organization"
 CREATE UNIQUE INDEX `organization_name` ON `organization` (`name`);
@@ -121,14 +148,14 @@ END;
 -- create "organization_members" table
 CREATE TABLE `organization_members` (
   `id` integer NULL PRIMARY KEY AUTOINCREMENT,
-  `role` text NULL DEFAULT 'MEMBER',
+  `group_id` integer NOT NULL,
   `user_id` integer NOT NULL,
   `organization_id` integer NOT NULL,
   `created_at` integer NOT NULL DEFAULT (strftime('%s','now')),
   `updated_at` integer NOT NULL DEFAULT (strftime('%s','now')),
   CONSTRAINT `0` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT `1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT `role_check` CHECK (role IN ('ADMIN', 'MEMBER'))
+  CONSTRAINT `2` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) STRICT;
 -- create trigger "organization_members_updated_at"
 -- +goose StatementBegin
@@ -142,7 +169,6 @@ END;
 CREATE TABLE `organization_invites` (
   `id` integer NULL PRIMARY KEY AUTOINCREMENT,
   `email` text NOT NULL,
-  `role` text NULL DEFAULT 'MEMBER',
   `status` text NULL DEFAULT 'PENDING',
   `token` text NOT NULL,
   `group_id` integer NOT NULL,
@@ -153,7 +179,6 @@ CREATE TABLE `organization_invites` (
   CONSTRAINT `0` FOREIGN KEY (`invited_by`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT `1` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
   CONSTRAINT `2` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT `role_check` CHECK (role IN ('ADMIN', 'MEMBER')),
   CONSTRAINT `status_check` CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED'))
 ) STRICT;
 -- create index "organization_invites_token" to table: "organization_invites"
@@ -1864,8 +1889,16 @@ DROP TRIGGER `jwt_tokens_updated_at`;
 DROP TABLE `jwt_tokens`;
 -- reverse: create "two_factor" table
 DROP TABLE `two_factor`;
+-- reverse: create "resource_access" table
+DROP TABLE `resource_access`;
+-- reverse: create index "user_policy_user_id_org_id_policy_id" to table: "user_policy"
+DROP INDEX `user_policy_user_id_org_id_policy_id`;
+-- reverse: create "user_policy" table
+DROP TABLE `user_policy`;
 -- reverse: create trigger "users_updated_at"
 DROP TRIGGER `users_updated_at`;
+-- reverse: create index "idx_single_owner" to table: "users"
+DROP INDEX `idx_single_owner`;
 -- reverse: create index "users_email" to table: "users"
 DROP INDEX `users_email`;
 -- reverse: create "users" table

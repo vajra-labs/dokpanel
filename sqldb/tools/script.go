@@ -104,5 +104,8 @@ func latestMigration(dir string) (string, error) {
 //
 // Already wrapped triggers are left unchanged.
 func wrapTriggers(content string) string {
-	return triggerRe.ReplaceAllString(content, "$1-- +goose StatementBegin\n$2\n-- +goose StatementEnd")
+	return triggerRe.ReplaceAllString(
+		content,
+		"$1-- +goose StatementBegin\n$2\n-- +goose StatementEnd",
+	)
 }

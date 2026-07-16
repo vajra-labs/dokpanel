@@ -187,7 +187,11 @@ func resolveJWT(varName string, variables map[string]string) string {
 }
 
 // processDomains resolves domain host placeholders.
-func processDomains(t *CompleteTemplate, variables map[string]string, schema Schema) []DomainConfig {
+func processDomains(
+	t *CompleteTemplate,
+	variables map[string]string,
+	schema Schema,
+) []DomainConfig {
 	if len(t.Config.Domains) == 0 {
 		return []DomainConfig{}
 	}

@@ -10,30 +10,23 @@ import (
 )
 
 const createJwtToken = `-- name: CreateJwtToken :one
-INSERT INTO jwt_tokens (jti, role, user_id, is_blacklist, expired_at)
-VALUES (?, ?, ?, 0, ?)
-RETURNING id, jti, role, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at
+INSERT INTO jwt_tokens (jti, user_id, is_blacklist, expired_at)
+VALUES (?, ?, 0, ?)
+RETURNING id, jti, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at
 `
 
 type CreateJwtTokenParams struct {
 	Jti       string `json:"jti"`
-	Role      string `json:"role"`
 	UserID    int64  `json:"user_id"`
 	ExpiredAt *int64 `json:"expired_at"`
 }
 
 func (q *Queries) CreateJwtToken(ctx context.Context, arg CreateJwtTokenParams) (JwtToken, error) {
-	row := q.db.QueryRowContext(ctx, createJwtToken,
-		arg.Jti,
-		arg.Role,
-		arg.UserID,
-		arg.ExpiredAt,
-	)
+	row := q.db.QueryRowContext(ctx, createJwtToken, arg.Jti, arg.UserID, arg.ExpiredAt)
 	var i JwtToken
 	err := row.Scan(
 		&i.ID,
 		&i.Jti,
-		&i.Role,
 		&i.UserID,
 		&i.IsBlacklist,
 		&i.BlacklistAt,
@@ -45,7 +38,7 @@ func (q *Queries) CreateJwtToken(ctx context.Context, arg CreateJwtTokenParams) 
 }
 
 const getJwtTokenByJti = `-- name: GetJwtTokenByJti :one
-SELECT id, jti, role, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at FROM jwt_tokens WHERE jti = ? LIMIT 1
+SELECT id, jti, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at FROM jwt_tokens WHERE jti = ? LIMIT 1
 `
 
 func (q *Queries) GetJwtTokenByJti(ctx context.Context, jti string) (JwtToken, error) {
@@ -54,7 +47,6 @@ func (q *Queries) GetJwtTokenByJti(ctx context.Context, jti string) (JwtToken, e
 	err := row.Scan(
 		&i.ID,
 		&i.Jti,
-		&i.Role,
 		&i.UserID,
 		&i.IsBlacklist,
 		&i.BlacklistAt,
@@ -66,7 +58,7 @@ func (q *Queries) GetJwtTokenByJti(ctx context.Context, jti string) (JwtToken, e
 }
 
 const getJwtTokenByJtiAndBlacklist = `-- name: GetJwtTokenByJtiAndBlacklist :one
-SELECT id, jti, role, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at FROM jwt_tokens WHERE jti = ? AND is_blacklist = ? LIMIT 1
+SELECT id, jti, user_id, is_blacklist, blacklist_at, expired_at, created_at, updated_at FROM jwt_tokens WHERE jti = ? AND is_blacklist = ? LIMIT 1
 `
 
 type GetJwtTokenByJtiAndBlacklistParams struct {
@@ -80,7 +72,6 @@ func (q *Queries) GetJwtTokenByJtiAndBlacklist(ctx context.Context, arg GetJwtTo
 	err := row.Scan(
 		&i.ID,
 		&i.Jti,
-		&i.Role,
 		&i.UserID,
 		&i.IsBlacklist,
 		&i.BlacklistAt,
