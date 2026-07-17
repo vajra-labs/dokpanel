@@ -182,32 +182,30 @@ func (q *Queries) GetGroupPolicies(ctx context.Context, groupID int64) ([]Policy
 
 const getUserFinalPermissions = `-- name: GetUserFinalPermissions :many
 WITH user_permissions AS (
-    SELECT p.action, up.effect
-    FROM user_policy up
-    JOIN policy p ON p.id = up.policy_id
-    WHERE up.user_id = ?1
-      AND up.org_id = ?2
+	SELECT p.action, up.effect
+	FROM user_policy up
+	JOIN policy p ON p.id = up.policy_id
+	WHERE up.user_id = ?1
+		AND up.org_id = ?2
 )
 SELECT DISTINCT action
 FROM (
-    SELECT p.action
-    FROM group_policy gp
-    JOIN policy p ON p.id = gp.policy_id
-    JOIN organization_members om
-        ON om.group_id = gp.group_id
-    WHERE om.user_id = ?1
-      AND om.organization_id = ?2
-
-    UNION ALL
-
-    SELECT action
-    FROM user_permissions
-    WHERE effect = 'GRANT'
+	SELECT p.action
+	FROM group_policy gp
+	JOIN policy p ON p.id = gp.policy_id
+	JOIN organization_members om
+		ON om.group_id = gp.group_id
+	WHERE om.user_id = ?1
+		AND om.organization_id = ?2
+	UNION ALL
+	SELECT action
+	FROM user_permissions
+	WHERE effect = 'GRANT'
 ) perms
 WHERE action NOT IN (
-    SELECT action
-    FROM user_permissions
-    WHERE effect = 'DENY'
+	SELECT action
+	FROM user_permissions
+	WHERE effect = 'DENY'
 )
 `
 

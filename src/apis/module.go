@@ -14,11 +14,13 @@ var Module = fx.Module(
 	fx.Provide(
 		handler.NewHealthHandler,
 		handler.NewAuthHandler,
+		handler.NewSshKeyHandler,
 		guard.NewGuard,
 	),
 	fx.Invoke(
 		docs.HealthOpenApi,
 		docs.AuthOpenApi,
+		docs.SshKeyOpenApi,
 		Register,
 	),
 )

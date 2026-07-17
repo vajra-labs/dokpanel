@@ -20,6 +20,10 @@ var tags = []*huma.Tag{
 		Name:        "Authentication",
 		Description: "Endpoints for user authentication and session management",
 	},
+	{
+		Name:        "SSH Keys",
+		Description: "Endpoints for managing secure SSH deployment keys",
+	},
 }
 
 // provideOpenAPI creates and returns a huma.API with all routes registered.

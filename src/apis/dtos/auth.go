@@ -25,3 +25,7 @@ type LoginRes struct {
 	Access  TokenDto `json:"access"  doc:"Access token details"`
 	Refresh TokenDto `json:"refresh" doc:"Refresh token details"`
 }
+
+type SetupStatusResDto struct {
+	IsOwnerPresent bool `json:"isOwnerPresent" doc:"True if owner is already registered"`
+}

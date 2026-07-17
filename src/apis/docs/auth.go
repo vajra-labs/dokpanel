@@ -1,140 +1,120 @@
 package docs
 
 import (
-	"net/http"
-
 	"goploy/src/apis/dtos"
 	"goploy/src/core/apidoc"
 
 	"github.com/danielgtaylor/huma/v2"
 )
 
+var authTags = []string{"Authentication"}
+
+// AuthOpenApi registers OpenAPI 3.1 specifications for auth endpoints.
 func AuthOpenApi(api huma.API) {
 	r := api.OpenAPI()
-	tags := []string{"Authentication"}
 
 	r.Paths["/api/auth/setup"] = &huma.PathItem{
 		Get: &huma.Operation{
-			Tags:        tags,
+			Tags:        authTags,
 			OperationID: "auth-setup",
 			Summary:     "Check Setup Status",
-			Description: "Returns whether the owner has already been registered.",
-			Responses: apidoc.Responses(
-				apidoc.JsonContent(api, http.StatusOK, struct {
-					IsOwnerPresent bool `json:"isOwnerPresent" doc:"True if owner is already registered"`
-				}{}, "Setup status"),
-			),
+			Description: "Check if the initial owner registration is done.",
+			Responses: apidoc.Response{
+				"200": apidoc.JsonContent(
+					api,
+					dtos.SetupStatusResDto{},
+					"Setup status",
+				),
+			},
 		},
 	}
-
 	r.Paths["/api/auth/register"] = &huma.PathItem{
 		Post: &huma.Operation{
-			Tags:        tags,
+			Tags:        authTags,
 			OperationID: "register-user",
 			Summary:     "Register Owner",
-			Description: "Registers the first user as the application owner. Fails if owner already exists.",
-			RequestBody: apidoc.Body(
+			Description: "Register the first user as owner of the app.",
+			RequestBody: apidoc.ReqBody(
 				api,
 				dtos.RegisterDto{},
-				true,
 				"Owner registration details",
+				true,
 			),
-			Responses: apidoc.Responses(
-				apidoc.TextContent(
-					http.StatusCreated,
-					"Owner registered successfully",
+			Responses: apidoc.Response{
+				"201": apidoc.JsonContent(
+					api,
+					dtos.LoginRes{},
+					"Owner registered and logged in successfully",
 				),
-				apidoc.ErrContent(
-					http.StatusBadRequest,
-					"Invalid request body",
-				),
-				apidoc.ErrContent(http.StatusConflict, "Owner already exists"),
-				apidoc.ErrContent(
-					http.StatusInternalServerError,
-					"Internal server error",
-				),
-			),
+				"400": apidoc.ErrContent("Invalid request body"),
+				"409": apidoc.ErrContent("Owner already exists"),
+				"500": apidoc.ErrContent("Internal server error"),
+			},
 		},
 	}
-
 	r.Paths["/api/auth/login"] = &huma.PathItem{
 		Post: &huma.Operation{
-			Tags:        tags,
+			Tags:        authTags,
 			OperationID: "login-user",
 			Summary:     "Login",
-			Description: "Authenticates a user using email and password and returns access + refresh tokens.",
-			RequestBody: apidoc.Body(
+			Description: "Authenticate user and set cookies for session.",
+			RequestBody: apidoc.ReqBody(
 				api,
 				dtos.LoginDto{},
-				true,
 				"Login credentials",
+				true,
 			),
-			Responses: apidoc.Responses(
-				apidoc.TextContent(
-					http.StatusOK,
-					"Access and refresh tokens set in HTTP-only cookies",
+			Responses: apidoc.Response{
+				"200": apidoc.JsonContent(
+					api,
+					dtos.LoginRes{},
+					"Logged in successfully, cookies set",
 				),
-				apidoc.ErrContent(
-					http.StatusBadRequest,
-					"Invalid request body",
-				),
-				apidoc.ErrContent(
-					http.StatusUnauthorized,
-					"Invalid email or password",
-				),
-				apidoc.ErrContent(
-					http.StatusInternalServerError,
-					"Internal server error",
-				),
-			),
+				"400": apidoc.ErrContent("Invalid request body"),
+				"401": apidoc.ErrContent("Invalid email or password"),
+				"500": apidoc.ErrContent("Internal server error"),
+			},
 		},
 	}
-
 	r.Paths["/api/auth/refresh"] = &huma.PathItem{
 		Post: &huma.Operation{
-			Tags:        tags,
+			Tags:        authTags,
 			OperationID: "refresh-token",
 			Summary:     "Refresh Access Token",
-			Description: "Regenerates a new HTTP-only access token using the valid HTTP-only refresh token cookie.",
-			Responses: apidoc.Responses(
-				apidoc.TextContent(
-					http.StatusOK,
-					"Access token refreshed successfully in cookies",
+			Description: "Refresh session cookie using the refresh token.",
+			Responses: apidoc.Response{
+				"200": apidoc.JsonContent(
+					api,
+					dtos.TokenDto{},
+					"Access token refreshed successfully",
 				),
-				apidoc.ErrContent(
-					http.StatusBadRequest,
-					"Refresh token is required",
-				),
-				apidoc.ErrContent(
-					http.StatusUnauthorized,
-					"Refresh token is invalid or expired",
-				),
-				apidoc.ErrContent(
-					http.StatusInternalServerError,
-					"Internal server error",
-				),
-			),
+				"400": apidoc.ErrContent("Refresh token is required"),
+				"401": apidoc.ErrContent("Refresh token is invalid or expired"),
+				"500": apidoc.ErrContent("Internal server error"),
+			},
 		},
 	}
-
 	r.Paths["/api/auth/logout"] = &huma.PathItem{
 		Post: &huma.Operation{
-			Tags:        tags,
+			Tags:        authTags,
 			OperationID: "logout-user",
 			Summary:     "Logout",
-			Description: "Blacklists the current refresh token and clears both authentication cookies.",
-			Parameters:  apidoc.QueryParams(dtos.LogoutDto{}),
-			Responses: apidoc.Responses(
-				apidoc.TextContent(http.StatusOK, "Logged out successfully"),
-				apidoc.ErrContent(
-					http.StatusBadRequest,
-					"Refresh token is required",
-				),
-				apidoc.ErrContent(
-					http.StatusInternalServerError,
-					"Internal server error",
-				),
-			),
+			Description: "Clear authentication cookies and log out.",
+			Parameters: apidoc.Param{
+				{
+					Name:        "all",
+					In:          "query",
+					Description: "Logout from all devices",
+					Schema: &huma.Schema{
+						Type: "boolean",
+					},
+				},
+			},
+			Responses: apidoc.Response{
+				"200": apidoc.TextContent("Logged out successfully"),
+				"400": apidoc.ErrContent("Refresh token is required"),
+				"500": apidoc.ErrContent("Internal server error"),
+			},
 		},
 	}
 }

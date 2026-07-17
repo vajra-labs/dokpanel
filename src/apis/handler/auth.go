@@ -24,14 +24,16 @@ func NewAuthHandler(
 	return &AuthHandler{auth, token, cfg}
 }
 
+// Setup handles GET /api/auth/setup.
 func (h *AuthHandler) Setup(ctx fiber.Ctx) error {
 	present, err := h.auth.IsOwnerPresent(ctx.Context())
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(fiber.Map{"isOwnerPresent": present})
+	return ctx.JSON(dtos.SetupStatusResDto{IsOwnerPresent: present})
 }
 
+// Login handles POST /api/auth/login.
 func (h *AuthHandler) Login(ctx fiber.Ctx) error {
 	var body dtos.LoginDto
 	if err := ctx.Bind().Body(&body); err != nil {
@@ -45,6 +47,7 @@ func (h *AuthHandler) Login(ctx fiber.Ctx) error {
 	return ctx.JSON(h.toLoginRes(tokens))
 }
 
+// Register handles POST /api/auth/register.
 func (h *AuthHandler) Register(ctx fiber.Ctx) error {
 	var body dtos.RegisterDto
 	if err := ctx.Bind().Body(&body); err != nil {
@@ -62,6 +65,7 @@ func (h *AuthHandler) Register(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(h.toLoginRes(tokens))
 }
 
+// Refresh handles POST /api/auth/refresh.
 func (h *AuthHandler) Refresh(ctx fiber.Ctx) error {
 	refreshToken := ctx.Cookies(string(types.REF_TOKEN))
 	if refreshToken == "" {
@@ -88,6 +92,7 @@ func (h *AuthHandler) Refresh(ctx fiber.Ctx) error {
 	})
 }
 
+// Logout handles POST /api/auth/logout.
 func (h *AuthHandler) Logout(ctx fiber.Ctx) error {
 	refreshToken := ctx.Cookies(string(types.REF_TOKEN))
 	if refreshToken == "" {

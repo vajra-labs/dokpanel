@@ -11,27 +11,25 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// HealthHandler manages system diagnostics and server health endpoints.
 type HealthHandler struct {
 	cfg *conf.Config
 }
 
-// NewHealthHandler constructs a HealthHandler dependency.
 func NewHealthHandler(cfg *conf.Config) *HealthHandler {
 	return &HealthHandler{cfg: cfg}
 }
 
-// Ping returns a simple pong message to test server availability.
+// Ping handles GET /api/ping.
 func (h *HealthHandler) Ping(ctx fiber.Ctx) error {
 	return ctx.SendString("Pong!")
 }
 
-// Pong returns a simple ping message.
+// Pong handles GET /api/pong.
 func (h *HealthHandler) Pong(ctx fiber.Ctx) error {
 	return ctx.SendString("Ping!")
 }
 
-// Health gathers runtime memory metrics and returns diagnostic stats.
+// Health handles GET /api/health.
 func (h *HealthHandler) Health(ctx fiber.Ctx) error {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
