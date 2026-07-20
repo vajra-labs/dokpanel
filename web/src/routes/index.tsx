@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import React from "react";
+import {createFileRoute} from '@tanstack/react-router';
+import React from 'react';
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute('/')({component: Home});
 
 function Home() {
 	React.useEffect(() => {
-		fetch("/api/health").then(async (res) => {
+		fetch('/api/health').then(async res => {
 			const json = await res.json();
 			console.log(json);
 		});
@@ -17,9 +17,6 @@ function Home() {
 			<p className="mt-4 text-lg">
 				Edit <code>src/routes/index.tsx</code> to get started.
 			</p>
-			<Link to="/about" className="mt-4 inline-block text-blue-500 underline">
-				About
-			</Link>
 		</div>
 	);
 }

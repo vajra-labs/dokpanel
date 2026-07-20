@@ -1,4 +1,4 @@
-package shell
+package shellx
 
 import (
 	"bytes"
@@ -36,17 +36,17 @@ func (c *SSHClient) Client() *ssh.Client {
 // SSHPool holds SSH connections for multiple servers.
 // Uses singleflight so only one dial happens per server at a time.
 type SSHPool struct {
-	mu    sync.RWMutex
-	pools map[int64]*SSHClient
-	group singleflight.Group
-	query *repos.Queries
+	mu      sync.RWMutex
+	pools   map[int64]*SSHClient
+	group   singleflight.Group
+	queries *repos.Queries
 }
 
 // NewSSHPool creates the pool and registers a cleanup hook on app shutdown.
 func NewSSHPool(lc fx.Lifecycle, query *repos.Queries) *SSHPool {
 	p := &SSHPool{
-		pools: make(map[int64]*SSHClient),
-		query: query,
+		pools:   make(map[int64]*SSHClient),
+		queries: query,
 	}
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
@@ -101,7 +101,7 @@ func (p *SSHPool) dial(
 ) (*ssh.Client, error) {
 	serverIdStr := fmt.Sprint(serverId)
 
-	cfg, err := p.query.GetServerSSHCredentials(ctx, serverId)
+	cfg, err := p.queries.GetServerSSHCredentials(ctx, serverId)
 	if err != nil {
 		return nil, &ExecError{
 			Message:  fmt.Sprintf("Failed to fetch SSH credentials: %v", err),

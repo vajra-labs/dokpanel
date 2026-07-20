@@ -1,4 +1,4 @@
-package shell
+package shellx
 
 import (
 	"bytes"
@@ -111,28 +111,27 @@ func Exec(
 		defer close(ch)
 		cmd := buildCmd(ctx, command, opts)
 		if opts.OnData != nil {
-			ch <- execStream(cmd, command, opts.OnData)
+			ch <- execAync(cmd, command, opts.OnData)
 		} else {
-			ch <- execSimple(cmd, command)
+			ch <- execSync(cmd, command)
 		}
 	}()
 
 	return ch
 }
 
-// execSimple runs the command and captures output into buffers.
+// execSync runs the command and captures output into buffers.
 // Used when no streaming callback is provided.
-func execSimple(cmd *exec.Cmd, command string) ExecResult {
+func execSync(cmd *exec.Cmd, command string) ExecResult {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		execErr := newExecError(
+		return ExecResult{Err: newExecError(
 			command, stdout.String(),
 			stderr.String(), err,
-		)
-		return ExecResult{Err: execErr}
+		)}
 	}
 
 	return ExecResult{
@@ -141,9 +140,9 @@ func execSimple(cmd *exec.Cmd, command string) ExecResult {
 	}
 }
 
-// execStream runs the command with stdout/stderr pipes and forwards
+// execAync runs the command with stdout/stderr pipes and forwards
 // each chunk to the onData callback in real-time.
-func execStream(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
+func execAync(cmd *exec.Cmd, command string, onData func(string)) ExecResult {
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
 		return ExecResult{Err: fmt.Errorf("stdout pipe: %w", err)}

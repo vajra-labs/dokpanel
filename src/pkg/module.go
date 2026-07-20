@@ -3,7 +3,7 @@ package pkg
 import (
 	"goploy/src/pkg/docker"
 	"goploy/src/pkg/jwt"
-	"goploy/src/pkg/shell"
+	"goploy/src/pkg/shellx"
 
 	"go.uber.org/fx"
 )
@@ -11,7 +11,9 @@ import (
 // Module bundles all utility sub-modules into a single fx module.
 var Module = fx.Module(
 	"pkg",
-	jwt.Module,
 	docker.Module,
-	fx.Provide(shell.NewSSHPool),
+	fx.Provide(
+		shellx.NewSSHPool,
+		jwt.NewJwtToken,
+	),
 )

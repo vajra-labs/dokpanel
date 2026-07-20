@@ -8,69 +8,87 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as rootRouteImport } from './routes/_root'
+import { Route as indexRouteImport } from './routes/index'
+import { Route as authSinginRouteImport } from './routes/auth/singin'
+import { Route as authSingupRouteImport } from './routes/auth/singup'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
+const indexRoute = indexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authSinginRoute = authSinginRouteImport.update({
+  id: '/singin',
+  path: '/singin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSingupRoute = authSingupRouteImport.update({
+  id: '/singup',
+  path: '/singup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof indexRoute
+  '/singin': typeof authSinginRoute
+  '/singup': typeof authSingupRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof indexRoute
+  '/singin': typeof authSinginRoute
+  '/singup': typeof authSingupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof indexRoute
+  '/singin': typeof authSinginRoute
+  '/singup': typeof authSingupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/singin' | '/singup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/singin' | '/singup'
+  id: '__root__' | '/' | '/singin' | '/singup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  indexRoute: typeof indexRoute
+  authSinginRoute: typeof authSinginRoute
+  authSingupRoute: typeof authSingupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof indexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/singin': {
+      id: '/singin'
+      path: '/singin'
+      fullPath: '/singin'
+      preLoaderRoute: typeof authSinginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/singup': {
+      id: '/singup'
+      path: '/singup'
+      fullPath: '/singup'
+      preLoaderRoute: typeof authSingupRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  indexRoute: indexRoute,
+  authSinginRoute: authSinginRoute,
+  authSingupRoute: authSingupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

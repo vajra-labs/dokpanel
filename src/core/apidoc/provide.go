@@ -24,6 +24,26 @@ var tags = []*huma.Tag{
 		Name:        "SSH Keys",
 		Description: "Endpoints for managing secure SSH deployment keys",
 	},
+	{
+		Name:        "Git Providers",
+		Description: "Endpoints for managing generic Git providers configurations",
+	},
+	{
+		Name:        "GitHub App",
+		Description: "Endpoints for managing GitHub App configuration and repositories",
+	},
+	{
+		Name:        "GitLab OAuth",
+		Description: "Endpoints for GitLab OAuth integration and token management",
+	},
+	{
+		Name:        "Gitea OAuth",
+		Description: "Endpoints for Gitea OAuth integration and token management",
+	},
+	{
+		Name:        "Bitbucket settings",
+		Description: "Endpoints for Bitbucket credentials and repositories management",
+	},
 }
 
 // provideOpenAPI creates and returns a huma.API with all routes registered.

@@ -17,25 +17,13 @@ const (
 	aud = "goploy-client"
 )
 
-// Payload holds standard JWT claims.
-type Payload struct {
-	jwt.RegisteredClaims
-	TokenType types.TOKEN `json:"token_type"`
-}
-
-// Token holds a signed JWT string and its expiry time.
-type Token struct {
-	Value   string
-	Expires time.Time
-}
-
 // JwtToken provides.
 type JwtToken struct {
 	secret []byte
 }
 
 // New creates a new JwtToken instance.
-func New(cfg *conf.Config) *JwtToken {
+func NewJwtToken(cfg *conf.Config) *JwtToken {
 	return &JwtToken{secret: []byte(cfg.SECRET)}
 }
 

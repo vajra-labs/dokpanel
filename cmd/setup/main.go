@@ -7,8 +7,7 @@ import (
 
 	"goploy/src/conf"
 	"goploy/src/core/logger"
-	"goploy/src/pkg/docker"
-	"goploy/src/setup"
+	"goploy/src/pkg/setup"
 
 	"go.uber.org/fx"
 )
@@ -40,7 +39,6 @@ func main() {
 		fx.NopLogger,
 		conf.Module,
 		logger.Module,
-		docker.Module,
 		setup.Module,
 		fx.Invoke(run),
 	)

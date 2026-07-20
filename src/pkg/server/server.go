@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"goploy/src/pkg/shell"
+	"goploy/src/pkg/shellx"
 
 	"github.com/moby/moby/client"
 )
@@ -12,7 +12,7 @@ import (
 // GetRemoteDocker returns a Docker client tunneled over SSH.
 func GetRemoteDocker(
 	ctx context.Context,
-	pool *shell.SSHPool,
+	pool *shellx.SSHPool,
 	serverId int64,
 ) (*client.Client, error) {
 	sc, err := pool.Get(ctx, serverId)

@@ -9,6 +9,129 @@ import (
 	"context"
 )
 
+const createBitbucketProvider = `-- name: CreateBitbucketProvider :one
+INSERT INTO bitbucket_providers (
+	bitbucket_username, bitbucket_email, app_password, api_token, bitbucket_workspace_name, git_provider_id
+) VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, bitbucket_username, bitbucket_email, app_password, api_token, bitbucket_workspace_name, git_provider_id, created_at, updated_at
+`
+
+type CreateBitbucketProviderParams struct {
+	BitbucketUsername      *string `json:"bitbucket_username"`
+	BitbucketEmail         *string `json:"bitbucket_email"`
+	AppPassword            *string `json:"app_password"`
+	ApiToken               *string `json:"api_token"`
+	BitbucketWorkspaceName *string `json:"bitbucket_workspace_name"`
+	GitProviderID          int64   `json:"git_provider_id"`
+}
+
+func (q *Queries) CreateBitbucketProvider(ctx context.Context, arg CreateBitbucketProviderParams) (BitbucketProvider, error) {
+	row := q.db.QueryRowContext(ctx, createBitbucketProvider,
+		arg.BitbucketUsername,
+		arg.BitbucketEmail,
+		arg.AppPassword,
+		arg.ApiToken,
+		arg.BitbucketWorkspaceName,
+		arg.GitProviderID,
+	)
+	var i BitbucketProvider
+	err := row.Scan(
+		&i.ID,
+		&i.BitbucketUsername,
+		&i.BitbucketEmail,
+		&i.AppPassword,
+		&i.ApiToken,
+		&i.BitbucketWorkspaceName,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createGitProvider = `-- name: CreateGitProvider :one
+INSERT INTO git_providers (
+	name, provider_type, shared
+) VALUES (?, ?, ?)
+RETURNING id, name, provider_type, shared, created_at, updated_at
+`
+
+type CreateGitProviderParams struct {
+	Name         string `json:"name"`
+	ProviderType string `json:"provider_type"`
+	Shared       int64  `json:"shared"`
+}
+
+func (q *Queries) CreateGitProvider(ctx context.Context, arg CreateGitProviderParams) (GitProvider, error) {
+	row := q.db.QueryRowContext(ctx, createGitProvider, arg.Name, arg.ProviderType, arg.Shared)
+	var i GitProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ProviderType,
+		&i.Shared,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createGiteaProvider = `-- name: CreateGiteaProvider :one
+INSERT INTO gitea_providers (
+	gitea_url, gitea_internal_url, redirect_uri, client_id, client_secret,
+	access_token, refresh_token, expires_at, scopes, last_authenticated_at, git_provider_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, gitea_url, gitea_internal_url, redirect_uri, client_id, client_secret, access_token, refresh_token, expires_at, scopes, last_authenticated_at, git_provider_id, created_at, updated_at
+`
+
+type CreateGiteaProviderParams struct {
+	GiteaUrl            string  `json:"gitea_url"`
+	GiteaInternalUrl    *string `json:"gitea_internal_url"`
+	RedirectUri         *string `json:"redirect_uri"`
+	ClientID            *string `json:"client_id"`
+	ClientSecret        *string `json:"client_secret"`
+	AccessToken         *string `json:"access_token"`
+	RefreshToken        *string `json:"refresh_token"`
+	ExpiresAt           *int64  `json:"expires_at"`
+	Scopes              *string `json:"scopes"`
+	LastAuthenticatedAt *int64  `json:"last_authenticated_at"`
+	GitProviderID       int64   `json:"git_provider_id"`
+}
+
+func (q *Queries) CreateGiteaProvider(ctx context.Context, arg CreateGiteaProviderParams) (GiteaProvider, error) {
+	row := q.db.QueryRowContext(ctx, createGiteaProvider,
+		arg.GiteaUrl,
+		arg.GiteaInternalUrl,
+		arg.RedirectUri,
+		arg.ClientID,
+		arg.ClientSecret,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.ExpiresAt,
+		arg.Scopes,
+		arg.LastAuthenticatedAt,
+		arg.GitProviderID,
+	)
+	var i GiteaProvider
+	err := row.Scan(
+		&i.ID,
+		&i.GiteaUrl,
+		&i.GiteaInternalUrl,
+		&i.RedirectUri,
+		&i.ClientID,
+		&i.ClientSecret,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.ExpiresAt,
+		&i.Scopes,
+		&i.LastAuthenticatedAt,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createGithubProvider = `-- name: CreateGithubProvider :one
 INSERT INTO github_providers (
 	github_app_name, github_app_id, github_client_id, github_client_secret,
@@ -56,6 +179,68 @@ func (q *Queries) CreateGithubProvider(ctx context.Context, arg CreateGithubProv
 	return i, err
 }
 
+const createGitlabProvider = `-- name: CreateGitlabProvider :one
+INSERT INTO gitlab_providers (
+	gitlab_url, gitlab_internal_url, application_id, redirect_uri, secret,
+	access_token, refresh_token, group_name, expires_at, git_provider_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, gitlab_url, gitlab_internal_url, application_id, redirect_uri, secret, access_token, refresh_token, group_name, expires_at, git_provider_id, created_at, updated_at
+`
+
+type CreateGitlabProviderParams struct {
+	GitlabUrl         string  `json:"gitlab_url"`
+	GitlabInternalUrl *string `json:"gitlab_internal_url"`
+	ApplicationID     *string `json:"application_id"`
+	RedirectUri       *string `json:"redirect_uri"`
+	Secret            *string `json:"secret"`
+	AccessToken       *string `json:"access_token"`
+	RefreshToken      *string `json:"refresh_token"`
+	GroupName         *string `json:"group_name"`
+	ExpiresAt         *int64  `json:"expires_at"`
+	GitProviderID     int64   `json:"git_provider_id"`
+}
+
+func (q *Queries) CreateGitlabProvider(ctx context.Context, arg CreateGitlabProviderParams) (GitlabProvider, error) {
+	row := q.db.QueryRowContext(ctx, createGitlabProvider,
+		arg.GitlabUrl,
+		arg.GitlabInternalUrl,
+		arg.ApplicationID,
+		arg.RedirectUri,
+		arg.Secret,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.GroupName,
+		arg.ExpiresAt,
+		arg.GitProviderID,
+	)
+	var i GitlabProvider
+	err := row.Scan(
+		&i.ID,
+		&i.GitlabUrl,
+		&i.GitlabInternalUrl,
+		&i.ApplicationID,
+		&i.RedirectUri,
+		&i.Secret,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.GroupName,
+		&i.ExpiresAt,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteGitProvider = `-- name: DeleteGitProvider :exec
+DELETE FROM git_providers WHERE id = ?
+`
+
+func (q *Queries) DeleteGitProvider(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGitProvider, id)
+	return err
+}
+
 const getBitbucketProviderByGitProviderID = `-- name: GetBitbucketProviderByGitProviderID :one
 SELECT id, bitbucket_username, bitbucket_email, app_password, api_token, bitbucket_workspace_name, git_provider_id, created_at, updated_at FROM bitbucket_providers WHERE git_provider_id = ? LIMIT 1
 `
@@ -92,6 +277,24 @@ func (q *Queries) GetBitbucketProviderByID(ctx context.Context, id int64) (Bitbu
 		&i.ApiToken,
 		&i.BitbucketWorkspaceName,
 		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGitProviderByID = `-- name: GetGitProviderByID :one
+SELECT id, name, provider_type, shared, created_at, updated_at FROM git_providers WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetGitProviderByID(ctx context.Context, id int64) (GitProvider, error) {
+	row := q.db.QueryRowContext(ctx, getGitProviderByID, id)
+	var i GitProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ProviderType,
+		&i.Shared,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -227,6 +430,263 @@ SELECT id, gitlab_url, gitlab_internal_url, application_id, redirect_uri, secret
 
 func (q *Queries) GetGitlabProviderByID(ctx context.Context, id int64) (GitlabProvider, error) {
 	row := q.db.QueryRowContext(ctx, getGitlabProviderByID, id)
+	var i GitlabProvider
+	err := row.Scan(
+		&i.ID,
+		&i.GitlabUrl,
+		&i.GitlabInternalUrl,
+		&i.ApplicationID,
+		&i.RedirectUri,
+		&i.Secret,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.GroupName,
+		&i.ExpiresAt,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listGitProviders = `-- name: ListGitProviders :many
+SELECT id, name, provider_type, shared, created_at, updated_at FROM git_providers ORDER BY created_at DESC
+`
+
+func (q *Queries) ListGitProviders(ctx context.Context) ([]GitProvider, error) {
+	rows, err := q.db.QueryContext(ctx, listGitProviders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GitProvider{}
+	for rows.Next() {
+		var i GitProvider
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ProviderType,
+			&i.Shared,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateBitbucketProvider = `-- name: UpdateBitbucketProvider :one
+UPDATE bitbucket_providers
+SET bitbucket_username = ?, bitbucket_email = ?, app_password = ?, api_token = ?, bitbucket_workspace_name = ?, updated_at = (strftime('%s', 'now'))
+WHERE id = ?
+RETURNING id, bitbucket_username, bitbucket_email, app_password, api_token, bitbucket_workspace_name, git_provider_id, created_at, updated_at
+`
+
+type UpdateBitbucketProviderParams struct {
+	BitbucketUsername      *string `json:"bitbucket_username"`
+	BitbucketEmail         *string `json:"bitbucket_email"`
+	AppPassword            *string `json:"app_password"`
+	ApiToken               *string `json:"api_token"`
+	BitbucketWorkspaceName *string `json:"bitbucket_workspace_name"`
+	ID                     int64   `json:"id"`
+}
+
+func (q *Queries) UpdateBitbucketProvider(ctx context.Context, arg UpdateBitbucketProviderParams) (BitbucketProvider, error) {
+	row := q.db.QueryRowContext(ctx, updateBitbucketProvider,
+		arg.BitbucketUsername,
+		arg.BitbucketEmail,
+		arg.AppPassword,
+		arg.ApiToken,
+		arg.BitbucketWorkspaceName,
+		arg.ID,
+	)
+	var i BitbucketProvider
+	err := row.Scan(
+		&i.ID,
+		&i.BitbucketUsername,
+		&i.BitbucketEmail,
+		&i.AppPassword,
+		&i.ApiToken,
+		&i.BitbucketWorkspaceName,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateGitProvider = `-- name: UpdateGitProvider :one
+UPDATE git_providers
+SET name = ?, shared = ?, updated_at = (strftime('%s', 'now'))
+WHERE id = ?
+RETURNING id, name, provider_type, shared, created_at, updated_at
+`
+
+type UpdateGitProviderParams struct {
+	Name   string `json:"name"`
+	Shared int64  `json:"shared"`
+	ID     int64  `json:"id"`
+}
+
+func (q *Queries) UpdateGitProvider(ctx context.Context, arg UpdateGitProviderParams) (GitProvider, error) {
+	row := q.db.QueryRowContext(ctx, updateGitProvider, arg.Name, arg.Shared, arg.ID)
+	var i GitProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ProviderType,
+		&i.Shared,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateGiteaProvider = `-- name: UpdateGiteaProvider :one
+UPDATE gitea_providers
+SET gitea_url = ?, gitea_internal_url = ?, redirect_uri = ?, client_id = ?, client_secret = ?,
+	access_token = ?, refresh_token = ?, expires_at = ?, scopes = ?, last_authenticated_at = ?, updated_at = (strftime('%s', 'now'))
+WHERE id = ?
+RETURNING id, gitea_url, gitea_internal_url, redirect_uri, client_id, client_secret, access_token, refresh_token, expires_at, scopes, last_authenticated_at, git_provider_id, created_at, updated_at
+`
+
+type UpdateGiteaProviderParams struct {
+	GiteaUrl            string  `json:"gitea_url"`
+	GiteaInternalUrl    *string `json:"gitea_internal_url"`
+	RedirectUri         *string `json:"redirect_uri"`
+	ClientID            *string `json:"client_id"`
+	ClientSecret        *string `json:"client_secret"`
+	AccessToken         *string `json:"access_token"`
+	RefreshToken        *string `json:"refresh_token"`
+	ExpiresAt           *int64  `json:"expires_at"`
+	Scopes              *string `json:"scopes"`
+	LastAuthenticatedAt *int64  `json:"last_authenticated_at"`
+	ID                  int64   `json:"id"`
+}
+
+func (q *Queries) UpdateGiteaProvider(ctx context.Context, arg UpdateGiteaProviderParams) (GiteaProvider, error) {
+	row := q.db.QueryRowContext(ctx, updateGiteaProvider,
+		arg.GiteaUrl,
+		arg.GiteaInternalUrl,
+		arg.RedirectUri,
+		arg.ClientID,
+		arg.ClientSecret,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.ExpiresAt,
+		arg.Scopes,
+		arg.LastAuthenticatedAt,
+		arg.ID,
+	)
+	var i GiteaProvider
+	err := row.Scan(
+		&i.ID,
+		&i.GiteaUrl,
+		&i.GiteaInternalUrl,
+		&i.RedirectUri,
+		&i.ClientID,
+		&i.ClientSecret,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.ExpiresAt,
+		&i.Scopes,
+		&i.LastAuthenticatedAt,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateGithubProvider = `-- name: UpdateGithubProvider :one
+UPDATE github_providers
+SET github_app_name = ?, github_app_id = ?, github_client_id = ?, github_client_secret = ?,
+	github_installation_id = ?, github_private_key = ?, github_webhook_secret = ?, updated_at = (strftime('%s', 'now'))
+WHERE id = ?
+RETURNING id, github_app_name, github_app_id, github_client_id, github_client_secret, github_installation_id, github_private_key, github_webhook_secret, git_provider_id, created_at, updated_at
+`
+
+type UpdateGithubProviderParams struct {
+	GithubAppName        *string `json:"github_app_name"`
+	GithubAppID          *int64  `json:"github_app_id"`
+	GithubClientID       *string `json:"github_client_id"`
+	GithubClientSecret   *string `json:"github_client_secret"`
+	GithubInstallationID *string `json:"github_installation_id"`
+	GithubPrivateKey     *string `json:"github_private_key"`
+	GithubWebhookSecret  *string `json:"github_webhook_secret"`
+	ID                   int64   `json:"id"`
+}
+
+func (q *Queries) UpdateGithubProvider(ctx context.Context, arg UpdateGithubProviderParams) (GithubProvider, error) {
+	row := q.db.QueryRowContext(ctx, updateGithubProvider,
+		arg.GithubAppName,
+		arg.GithubAppID,
+		arg.GithubClientID,
+		arg.GithubClientSecret,
+		arg.GithubInstallationID,
+		arg.GithubPrivateKey,
+		arg.GithubWebhookSecret,
+		arg.ID,
+	)
+	var i GithubProvider
+	err := row.Scan(
+		&i.ID,
+		&i.GithubAppName,
+		&i.GithubAppID,
+		&i.GithubClientID,
+		&i.GithubClientSecret,
+		&i.GithubInstallationID,
+		&i.GithubPrivateKey,
+		&i.GithubWebhookSecret,
+		&i.GitProviderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateGitlabProvider = `-- name: UpdateGitlabProvider :one
+UPDATE gitlab_providers
+SET gitlab_url = ?, gitlab_internal_url = ?, application_id = ?, redirect_uri = ?, secret = ?,
+	access_token = ?, refresh_token = ?, group_name = ?, expires_at = ?, updated_at = (strftime('%s', 'now'))
+WHERE id = ?
+RETURNING id, gitlab_url, gitlab_internal_url, application_id, redirect_uri, secret, access_token, refresh_token, group_name, expires_at, git_provider_id, created_at, updated_at
+`
+
+type UpdateGitlabProviderParams struct {
+	GitlabUrl         string  `json:"gitlab_url"`
+	GitlabInternalUrl *string `json:"gitlab_internal_url"`
+	ApplicationID     *string `json:"application_id"`
+	RedirectUri       *string `json:"redirect_uri"`
+	Secret            *string `json:"secret"`
+	AccessToken       *string `json:"access_token"`
+	RefreshToken      *string `json:"refresh_token"`
+	GroupName         *string `json:"group_name"`
+	ExpiresAt         *int64  `json:"expires_at"`
+	ID                int64   `json:"id"`
+}
+
+func (q *Queries) UpdateGitlabProvider(ctx context.Context, arg UpdateGitlabProviderParams) (GitlabProvider, error) {
+	row := q.db.QueryRowContext(ctx, updateGitlabProvider,
+		arg.GitlabUrl,
+		arg.GitlabInternalUrl,
+		arg.ApplicationID,
+		arg.RedirectUri,
+		arg.Secret,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.GroupName,
+		arg.ExpiresAt,
+		arg.ID,
+	)
 	var i GitlabProvider
 	err := row.Scan(
 		&i.ID,
